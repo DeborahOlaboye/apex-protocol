@@ -104,3 +104,47 @@ Clarity is intentionally Turing-incomplete. You can statically analyze whether a
 4. Calls `margin-manager::lock-collateral` to freeze margin
 5. Records entry price and entry funding rate cumulative in positions map
 6. Updates market open interest (long or short bucket)
+
+---
+
+## Contracts
+
+### `oracle.clar`
+
+Price feed management with staleness protection. Authorized oracles submit prices on-chain. Any price older than `STALE-THRESHOLD` (150 blocks, ~25 minutes) is rejected to prevent stale-price exploits.
+
+**Key functions:** `submit-price`, `get-price` (with staleness guard), `add-oracle`, `remove-oracle`
+
+---
+
+### `margin-manager.clar`
+
+Custodian for all user collateral. Tracks `{amount, locked}` per user per asset. Authorized contracts (clearing house, liquidation engine) can lock, unlock, and transfer balances atomically — the balance never leaves the contract until an explicit withdraw.
+
+**Key functions:** `deposit-stx`, `deposit-sbtc`, `withdraw`, `lock-collateral`, `unlock-collateral`, `transfer-collateral`
+
+---
+
+### `funding-rate.clar`
+
+8-hour periodic funding between longs and shorts. Rate = `(mark - index) / index` in basis points, clamped to +/-1%. Applied cumulatively — each position tracks its entry cumulative rate and pays or receives the delta on close.
+
+**Key functions:** `calculate-funding-rate`, `apply-funding`, `get-funding-payment`, `init-market`
+
+---
+
+### `clearing-house.clar`
+
+The core trading engine. Manages markets, opens and closes leveraged positions, tracks open interest, and computes unrealized P&L and margin ratios.
+
+**Key functions:** `open-position`, `close-position`, `add-margin`, `create-market`, `get-unrealized-pnl`, `get-margin-ratio`
+
+---
+
+### `liquidation-engine.clar`
+
+Permissionless liquidator. Anyone can call `liquidate` on an undercollateralized position. The liquidator receives a 5% bonus; 20% goes to the insurance fund; the rest returns to the trader.
+
+**Key functions:** `liquidate`, `is-liquidatable`, `set-insurance-fund`
+
+---
