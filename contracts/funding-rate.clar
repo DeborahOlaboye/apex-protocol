@@ -10,3 +10,10 @@
 (define-constant ERR-UNAUTHORIZED (err u100))
 (define-constant ERR-TOO-EARLY (err u101))
 (define-constant ERR-MARKET-NOT-FOUND (err u102))
+
+(define-map funding-rates
+  { market-id: uint }
+  { rate: int, last-update: uint, cumulative-rate: int })
+
+(define-map authorized-contracts principal bool)
+(define-data-var owner principal CONTRACT-OWNER)
