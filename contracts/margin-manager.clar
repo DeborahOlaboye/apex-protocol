@@ -22,3 +22,13 @@
 
 (define-data-var owner principal CONTRACT-OWNER)
 (define-data-var sbtc-contract principal 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token)
+
+;; Read-only functions
+
+(define-read-only (get-balance (user principal) (asset-id uint))
+  (default-to { amount: u0, locked: u0 }
+    (map-get? collateral-balances { user: user, asset-id: asset-id })))
+
+(define-read-only (get-available-balance (user principal) (asset-id uint))
+  (let ((bal (get-balance user asset-id)))
+    (- (get amount bal) (get locked bal))))
