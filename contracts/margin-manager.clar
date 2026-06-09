@@ -32,3 +32,6 @@
 (define-read-only (get-available-balance (user principal) (asset-id uint))
   (let ((bal (get-balance user asset-id)))
     (- (get amount bal) (get locked bal))))
+
+(define-read-only (is-authorized (contract principal))
+  (default-to false (map-get? authorized-contracts contract)))
