@@ -1,0 +1,35 @@
+[project]
+name = "apex-protocol"
+description = "Decentralized perpetual futures and options protocol on Stacks using sBTC collateral"
+authors = []
+telemetry = false
+cache_dir = "./.clarinet"
+
+[contracts.oracle]
+path = "contracts/oracle.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.margin-manager]
+path = "contracts/margin-manager.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.funding-rate]
+path = "contracts/funding-rate.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.clearing-house]
+path = "contracts/clearing-house.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.liquidation-engine]
+path = "contracts/liquidation-engine.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[repl]
+costs_version = 3
+parser_version = 3
