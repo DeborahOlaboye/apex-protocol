@@ -66,3 +66,19 @@
       price-data (ok (* (get size pos) (get price price-data)))
       err-code (err err-code))
     ERR-NO-POSITION))
+
+(define-read-only (get-unrealized-pnl (user principal) (market-id uint))
+  (match (map-get? positions { user: user, market-id: market-id })
+    pos
+    (match (contract-call? (var-get oracle-contract) get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
+      price-data
+      (let* ((current-price (get price price-data))
+             (entry-price (get entry-price pos))
+             (size (get size pos))
+             (price-delta (if (get is-long pos)
+                            (to-int (- current-price entry-price))
+                            (to-int (- entry-price current-price))))
+             (raw-pnl (* price-delta (to-int size))))
+        (ok raw-pnl))
+      err-code (err err-code))
+    ERR-NO-POSITION))
