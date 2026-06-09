@@ -17,3 +17,13 @@
 
 (define-map authorized-contracts principal bool)
 (define-data-var owner principal CONTRACT-OWNER)
+
+;; Read-only functions
+
+(define-read-only (get-funding-rate (market-id uint))
+  (map-get? funding-rates { market-id: market-id }))
+
+(define-read-only (get-current-rate (market-id uint))
+  (match (map-get? funding-rates { market-id: market-id })
+    data (get rate data)
+    i0))
