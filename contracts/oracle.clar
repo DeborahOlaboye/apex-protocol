@@ -17,3 +17,5 @@
   { price: uint, timestamp: uint, source: principal })
 
 (define-map authorized-oracles principal bool)
+
+(define-data-var owner principal CONTRACT-OWNER)
