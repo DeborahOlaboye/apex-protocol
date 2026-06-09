@@ -40,3 +40,15 @@
   (match (map-get? price-feeds { asset-id: asset-id })
     feed (<= (- block-height (get timestamp feed)) STALE-THRESHOLD)
     false))
+
+;; Public functions
+
+(define-public (submit-price (asset-id uint) (price uint))
+  (begin
+    (asserts! (is-authorized-oracle tx-sender) ERR-UNAUTHORIZED)
+    (asserts! (> price u0) ERR-INVALID-PRICE)
+    (map-set price-feeds
+      { asset-id: asset-id }
+      { price: price, timestamp: block-height, source: tx-sender })
+    (print { event: "price-submitted", asset-id: asset-id, price: price, source: tx-sender, block: block-height })
+    (ok true)))
