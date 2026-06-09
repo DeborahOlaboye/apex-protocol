@@ -90,3 +90,13 @@
         { user: user, asset-id: asset-id }
         { amount: (get amount current), locked: (+ (get locked current) amount) }))
     (ok true)))
+
+(define-public (unlock-collateral (user principal) (asset-id uint) (amount uint))
+  (begin
+    (asserts! (is-authorized tx-sender) ERR-UNAUTHORIZED)
+    (let ((current (get-balance user asset-id)))
+      (asserts! (>= (get locked current) amount) ERR-INSUFFICIENT-BALANCE)
+      (map-set collateral-balances
+        { user: user, asset-id: asset-id }
+        { amount: (get amount current), locked: (- (get locked current) amount) }))
+    (ok true)))
