@@ -20,3 +20,18 @@
 (define-data-var insurance-fund principal CONTRACT-OWNER)
 (define-data-var clearing-house-contract principal CONTRACT-OWNER)
 (define-data-var margin-contract principal CONTRACT-OWNER)
+
+;; Read-only functions
+
+(define-read-only (get-insurance-fund)
+  (var-get insurance-fund))
+
+(define-read-only (get-liquidation (user principal) (market-id uint) (block uint))
+  (map-get? liquidation-history { user: user, market-id: market-id, block: block }))
+
+(define-read-only (is-liquidatable (user principal) (market-id uint))
+  (match (contract-call? (var-get clearing-house-contract) get-margin-ratio user market-id)
+    ratio
+    (let ((market (unwrap-panic (contract-call? (var-get clearing-house-contract) get-market market-id))))
+      (< ratio (to-int (get maintenance-margin-rate market))))
+    err false))
