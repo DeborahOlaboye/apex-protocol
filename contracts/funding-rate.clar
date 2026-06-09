@@ -27,3 +27,13 @@
   (match (map-get? funding-rates { market-id: market-id })
     data (get rate data)
     i0))
+
+(define-read-only (get-cumulative-rate (market-id uint))
+  (match (map-get? funding-rates { market-id: market-id })
+    data (get cumulative-rate data)
+    i0))
+
+(define-read-only (can-apply-funding (market-id uint))
+  (match (map-get? funding-rates { market-id: market-id })
+    data (>= block-height (+ (get last-update data) FUNDING-INTERVAL))
+    true))
