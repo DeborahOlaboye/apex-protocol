@@ -29,3 +29,14 @@
     open-interest-long: uint,
     open-interest-short: uint,
     created-at: uint })
+
+;; User positions
+(define-map positions
+  { user: principal, market-id: uint }
+  { size: uint,
+    is-long: bool,
+    entry-price: uint,
+    margin: uint,
+    collateral-asset-id: uint,
+    entry-funding-rate: int,
+    last-updated: uint })
