@@ -96,3 +96,32 @@
           ERR-NO-POSITION))
       err-code (err err-code))
     ERR-NO-POSITION))
+
+;; Admin functions
+
+(define-public (create-market (base-asset-id uint) (quote-asset-id uint) (max-leverage uint) (maintenance-margin-rate uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (asserts! (> max-leverage u0) ERR-INVALID-SIZE)
+    (let ((market-id (var-get next-market-id)))
+      (map-set markets
+        { market-id: market-id }
+        { base-asset-id: base-asset-id,
+          quote-asset-id: quote-asset-id,
+          is-active: true,
+          max-leverage: max-leverage,
+          maintenance-margin-rate: maintenance-margin-rate,
+          open-interest-long: u0,
+          open-interest-short: u0,
+          created-at: block-height })
+      (var-set next-market-id (+ market-id u1))
+      (try! (contract-call? (var-get funding-contract) init-market market-id))
+      (print { event: "market-created", market-id: market-id, base-asset-id: base-asset-id })
+      (ok market-id))))
+
+(define-public (set-market-active (market-id uint) (is-active bool))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND)))
+      (map-set markets { market-id: market-id } (merge market { is-active: is-active }))
+      (ok true))))
