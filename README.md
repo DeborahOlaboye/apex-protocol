@@ -236,3 +236,65 @@ The insurance fund absorbs bad debt when a position's losses exceed its collater
 ### Why Permissionless Liquidation?
 
 Liquidators earn a 5% bonus — this creates a competitive market of liquidation bots that constantly monitor positions. No trusted admin needed. The protocol stays solvent through economic incentives, not access control.
+
+---
+
+## Technical Specifications
+
+| Parameter | Value |
+|---|---|
+| Max leverage | 20x |
+| Maintenance margin | 5% (500 bps) |
+| Funding interval | 150 blocks (~8 hours) |
+| Max funding rate | +/-1% per interval (100 bps) |
+| Liquidation bonus | 5% (500 bps) |
+| Insurance fund cut | 20% of seized margin (2000 bps) |
+| Price staleness threshold | 150 blocks (~25 minutes) |
+| Collateral assets | STX (asset-id 1), sBTC (asset-id 2) |
+| Contract language | Clarity 3, Epoch 3.0 |
+| Basis points denominator | 10000 |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Clarinet](https://github.com/hirosystems/clarinet) v2.x
+- Node.js v18+ with `@stacks/transactions`
+- [Leather wallet](https://leather.io/) for sBTC
+
+### Installation
+
+```bash
+git clone https://github.com/DeborahOlaboye/apex-protocol
+cd apex-protocol
+clarinet check
+clarinet devnet start
+```
+
+### Deploy Order
+
+Deploy in this order to satisfy inter-contract dependencies:
+
+1. `oracle` — no dependencies
+2. `margin-manager` — no dependencies
+3. `funding-rate` — no dependencies
+4. `clearing-house` — depends on oracle, margin-manager, funding-rate
+5. `liquidation-engine` — depends on clearing-house, margin-manager
+
+### Post-Deploy Wiring
+
+```bash
+# Wire clearing-house dependencies
+clarinet call clearing-house set-oracle <oracle-contract>
+clarinet call clearing-house set-margin-manager <margin-manager-contract>
+clarinet call clearing-house set-funding-rate <funding-rate-contract>
+
+# Authorize clearing-house and liquidation-engine to manage collateral
+clarinet call margin-manager authorize-contract <clearing-house-contract>
+clarinet call margin-manager authorize-contract <liquidation-engine-contract>
+
+# Authorize clearing-house to apply funding rates
+clarinet call funding-rate authorize-contract <clearing-house-contract>
+```
