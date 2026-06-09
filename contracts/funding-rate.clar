@@ -53,3 +53,25 @@
     (if (< rate MIN-FUNDING-RATE)
       MIN-FUNDING-RATE
       rate)))
+
+;; Public functions
+
+;; Calculate rate as premium between mark and index price (basis points)
+(define-public (calculate-funding-rate (market-id uint) (mark-price uint) (index-price uint))
+  (begin
+    (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
+    (let* ((mark (to-int mark-price))
+           (index (to-int index-price))
+           (premium (if (> index i0)
+                      (/ (* (- mark index) BASIS-POINTS) index)
+                      i0))
+           (clamped (clamp-rate premium)))
+      (match (map-get? funding-rates { market-id: market-id })
+        existing
+        (map-set funding-rates
+          { market-id: market-id }
+          (merge existing { rate: clamped }))
+        (map-set funding-rates
+          { market-id: market-id }
+          { rate: clamped, last-update: block-height, cumulative-rate: i0 }))
+      (ok clamped))))
