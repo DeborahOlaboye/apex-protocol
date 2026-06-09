@@ -58,3 +58,11 @@
 
 (define-read-only (has-position (user principal) (market-id uint))
   (is-some (map-get? positions { user: user, market-id: market-id })))
+
+(define-read-only (get-position-value (user principal) (market-id uint))
+  (match (map-get? positions { user: user, market-id: market-id })
+    pos
+    (match (contract-call? (var-get oracle-contract) get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
+      price-data (ok (* (get size pos) (get price price-data)))
+      err-code (err err-code))
+    ERR-NO-POSITION))
