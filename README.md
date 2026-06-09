@@ -36,3 +36,29 @@ Apex Protocol brings institutional-grade perpetual futures to Bitcoin Layer 2. T
 - 8-hour funding rate mechanism aligned to spot prices
 - Permissionless liquidations with bonus incentives
 - Bitcoin-final settlement via Stacks Nakamoto upgrade
+
+---
+
+## Why Perpetuals on Stacks
+
+### The Gap
+
+Bitcoin has $1T+ in market cap but zero native derivatives. Existing BTC perpetuals run on Ethereum (dYdX, GMX) or CEXs — neither gives Bitcoin-native collateral or Bitcoin-final settlement.
+
+### Stacks Advantages
+
+| Feature | Stacks | Ethereum L2 |
+|---|---|---|
+| Collateral | sBTC (real Bitcoin) | WBTC (bridged) |
+| Settlement | Bitcoin finality | Optimistic or ZK rollup |
+| Block time | 5-10s (post-Nakamoto) | ~2s |
+| Smart contracts | Clarity (decidable) | Solidity (Turing-complete) |
+| Identity | BNS .btc names | ENS |
+
+### sBTC as Collateral
+
+sBTC is a 1:1 Bitcoin-backed asset on Stacks, with $545M TVL. Using sBTC as margin means your collateral is real Bitcoin secured by the Bitcoin network, not a bridged synthetic with custodian risk.
+
+### Clarity Safety
+
+Clarity is intentionally Turing-incomplete. You can statically analyze whether a contract will run out of gas, whether arithmetic will overflow, and what state transitions are possible. This is ideal for financial contracts where predictability is critical.
