@@ -19,3 +19,14 @@
 (define-map authorized-oracles principal bool)
 
 (define-data-var owner principal CONTRACT-OWNER)
+
+;; Read-only functions
+
+(define-read-only (get-owner)
+  (var-get owner))
+
+(define-read-only (is-authorized-oracle (oracle principal))
+  (default-to false (map-get? authorized-oracles oracle)))
+
+(define-read-only (get-latest-price (asset-id uint))
+  (map-get? price-feeds { asset-id: asset-id }))
