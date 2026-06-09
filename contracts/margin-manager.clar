@@ -19,3 +19,6 @@
 
 ;; Contracts authorized to lock/unlock/transfer collateral
 (define-map authorized-contracts principal bool)
+
+(define-data-var owner principal CONTRACT-OWNER)
+(define-data-var sbtc-contract principal 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token)
