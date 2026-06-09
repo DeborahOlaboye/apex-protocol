@@ -17,3 +17,15 @@
 (define-constant ERR-LEVERAGE-EXCEEDED (err u207))
 (define-constant ERR-STALE-PRICE (err u208))
 (define-constant ERR-TRANSFER-FAILED (err u209))
+
+;; Market configuration
+(define-map markets
+  { market-id: uint }
+  { base-asset-id: uint,
+    quote-asset-id: uint,
+    is-active: bool,
+    max-leverage: uint,
+    maintenance-margin-rate: uint,
+    open-interest-long: uint,
+    open-interest-short: uint,
+    created-at: uint })
