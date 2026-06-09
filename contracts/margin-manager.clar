@@ -61,3 +61,11 @@
     (add-balance tx-sender STX-ASSET-ID amount)
     (print { event: "deposit", user: tx-sender, asset-id: STX-ASSET-ID, amount: amount })
     (ok true)))
+
+(define-public (deposit-sbtc (amount uint))
+  (begin
+    (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (try! (contract-call? (var-get sbtc-contract) transfer amount tx-sender (as-contract tx-sender) none))
+    (add-balance tx-sender SBTC-ASSET-ID amount)
+    (print { event: "deposit", user: tx-sender, asset-id: SBTC-ASSET-ID, amount: amount })
+    (ok true)))
