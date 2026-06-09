@@ -47,3 +47,14 @@
 (define-data-var funding-contract principal CONTRACT-OWNER)
 (define-data-var liquidation-contract principal CONTRACT-OWNER)
 (define-data-var next-market-id uint u1)
+
+;; Read-only functions
+
+(define-read-only (get-market (market-id uint))
+  (map-get? markets { market-id: market-id }))
+
+(define-read-only (get-position (user principal) (market-id uint))
+  (map-get? positions { user: user, market-id: market-id }))
+
+(define-read-only (has-position (user principal) (market-id uint))
+  (is-some (map-get? positions { user: user, market-id: market-id })))
