@@ -148,3 +148,60 @@ Permissionless liquidator. Anyone can call `liquidate` on an undercollateralized
 **Key functions:** `liquidate`, `is-liquidatable`, `set-insurance-fund`
 
 ---
+## Funding Rate Mechanism
+
+The funding rate aligns the perpetual mark price to the spot index price, preventing long-term divergence.
+
+### Formula
+
+```
+premium = (mark_price - index_price) / index_price  [in basis points]
+rate = clamp(premium, -100 bps, +100 bps)
+```
+
+### Cumulative Accumulation
+
+Every `FUNDING-INTERVAL` blocks (~150 blocks = 8 hours):
+```
+cumulative_rate += current_rate
+```
+
+### Per-Position Payment at Close
+
+```
+funding_payment = position_size x (current_cumulative - entry_cumulative) / 10000
+```
+
+- **Longs pay** when rate > 0 (mark > index, market is overheated)
+- **Shorts receive** when rate > 0
+- Inverted when rate < 0 (market is underpriced relative to spot)
+
+This creates equilibrium: longs and shorts are balanced when funding rate approaches zero.
+
+---
+
+## Position Lifecycle
+
+```
+1. Deposit STX or sBTC -> margin-manager (deposit-stx / deposit-sbtc)
+
+2. open-position(market_id, is_long, size, margin, collateral_asset)
+   |-- oracle: fetch fresh price (fails if stale)
+   |-- assert: margin >= notional / max_leverage
+   |-- margin-manager: lock margin
+   |-- record: entry_price, entry_funding_cumulative
+   |-- update: open interest (long or short bucket)
+
+3. Position live: unrealized P&L = size x (current - entry) x direction
+
+4. close-position(market_id)
+   |-- oracle: fetch closing price
+   |-- raw_pnl = size x (close - entry) x direction
+   |-- funding_payment = size x (cumulative_now - entry_cumulative) / 10000
+   |-- net_pnl = raw_pnl - funding_payment
+   |-- margin-manager: unlock margin
+   |-- if net_pnl > 0: transfer profit to trader
+   |-- update: open interest
+
+5. Withdraw -> margin-manager (withdraw)
+```
