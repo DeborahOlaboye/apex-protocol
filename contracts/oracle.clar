@@ -30,3 +30,8 @@
 
 (define-read-only (get-latest-price (asset-id uint))
   (map-get? price-feeds { asset-id: asset-id }))
+
+(define-read-only (get-price (asset-id uint))
+  (let ((feed (unwrap! (map-get? price-feeds { asset-id: asset-id }) ERR-NOT-FOUND)))
+    (asserts! (<= (- block-height (get timestamp feed)) STALE-THRESHOLD) ERR-STALE-PRICE)
+    (ok { price: (get price feed), timestamp: (get timestamp feed) })))
