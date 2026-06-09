@@ -52,3 +52,24 @@
       { price: price, timestamp: block-height, source: tx-sender })
     (print { event: "price-submitted", asset-id: asset-id, price: price, source: tx-sender, block: block-height })
     (ok true)))
+
+(define-public (add-oracle (oracle principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-authorized-oracle oracle)) ERR-ALREADY-AUTHORIZED)
+    (map-set authorized-oracles oracle true)
+    (print { event: "oracle-added", oracle: oracle })
+    (ok true)))
+
+(define-public (remove-oracle (oracle principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (map-delete authorized-oracles oracle)
+    (print { event: "oracle-removed", oracle: oracle })
+    (ok true)))
+
+(define-public (transfer-ownership (new-owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (var-set owner new-owner)
+    (ok true)))
