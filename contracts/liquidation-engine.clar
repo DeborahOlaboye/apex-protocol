@@ -11,3 +11,12 @@
 (define-constant ERR-NO-POSITION (err u302))
 (define-constant ERR-MARKET-NOT-FOUND (err u303))
 (define-constant ERR-TRANSFER-FAILED (err u304))
+
+(define-map liquidation-history
+  { user: principal, market-id: uint, block: uint }
+  { liquidated-by: principal, margin-seized: uint, bonus-paid: uint })
+
+(define-data-var owner principal CONTRACT-OWNER)
+(define-data-var insurance-fund principal CONTRACT-OWNER)
+(define-data-var clearing-house-contract principal CONTRACT-OWNER)
+(define-data-var margin-contract principal CONTRACT-OWNER)
