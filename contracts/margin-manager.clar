@@ -35,3 +35,19 @@
 
 (define-read-only (is-authorized (contract principal))
   (default-to false (map-get? authorized-contracts contract)))
+
+;; Internal helpers
+
+(define-private (add-balance (user principal) (asset-id uint) (amount uint))
+  (let ((current (get-balance user asset-id)))
+    (map-set collateral-balances
+      { user: user, asset-id: asset-id }
+      { amount: (+ (get amount current) amount), locked: (get locked current) })))
+
+(define-private (subtract-balance (user principal) (asset-id uint) (amount uint))
+  (let ((current (get-balance user asset-id)))
+    (asserts! (>= (get-available-balance user asset-id) amount) ERR-INSUFFICIENT-UNLOCKED)
+    (map-set collateral-balances
+      { user: user, asset-id: asset-id }
+      { amount: (- (get amount current) amount), locked: (get locked current) })
+    (ok true)))
