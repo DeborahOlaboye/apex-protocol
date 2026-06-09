@@ -125,3 +125,39 @@
     (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND)))
       (map-set markets { market-id: market-id } (merge market { is-active: is-active }))
       (ok true))))
+
+;; Trading functions
+
+(define-public (open-position (market-id uint) (is-long bool) (size uint) (margin uint) (collateral-asset-id uint))
+  (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND)))
+    (asserts! (get is-active market) ERR-MARKET-INACTIVE)
+    (asserts! (not (has-position tx-sender market-id)) ERR-POSITION-EXISTS)
+    (asserts! (> size u0) ERR-INVALID-SIZE)
+    (asserts! (> margin u0) ERR-INSUFFICIENT-MARGIN)
+    (let* ((price-data (try! (contract-call? (var-get oracle-contract) get-price (get base-asset-id market))))
+           (current-price (get price price-data))
+           (notional (* size current-price))
+           (required-margin (/ notional (get max-leverage market))))
+      (asserts! (>= margin required-margin) ERR-LEVERAGE-EXCEEDED)
+      (try! (contract-call? (var-get margin-contract) lock-collateral tx-sender collateral-asset-id margin))
+      (let ((entry-funding (contract-call? (var-get funding-contract) get-cumulative-rate market-id)))
+        (map-set positions
+          { user: tx-sender, market-id: market-id }
+          { size: size,
+            is-long: is-long,
+            entry-price: current-price,
+            margin: margin,
+            collateral-asset-id: collateral-asset-id,
+            entry-funding-rate: entry-funding,
+            last-updated: block-height })
+        (map-set markets
+          { market-id: market-id }
+          (merge market
+            (if is-long
+              { open-interest-long: (+ (get open-interest-long market) notional),
+                open-interest-short: (get open-interest-short market) }
+              { open-interest-long: (get open-interest-long market),
+                open-interest-short: (+ (get open-interest-short market) notional) })))
+        (print { event: "position-opened", user: tx-sender, market-id: market-id,
+                 is-long: is-long, size: size, entry-price: current-price, margin: margin })
+        (ok true)))))
