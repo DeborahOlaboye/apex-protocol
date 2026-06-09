@@ -37,3 +37,11 @@
   (match (map-get? funding-rates { market-id: market-id })
     data (>= block-height (+ (get last-update data) FUNDING-INTERVAL))
     true))
+
+;; Calculates funding payment for a position
+;; Positive = position pays, Negative = position receives
+(define-read-only (get-funding-payment (market-id uint) (position-size int) (entry-cumulative-rate int))
+  (let ((current-cumulative (get-cumulative-rate market-id))
+        (rate-delta (- current-cumulative entry-cumulative-rate)))
+    ;; longs pay when rate > 0, shorts receive; inverted when rate < 0
+    (* position-size (/ rate-delta BASIS-POINTS))))
