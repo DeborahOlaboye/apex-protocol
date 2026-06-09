@@ -35,3 +35,30 @@
     (let ((market (unwrap-panic (contract-call? (var-get clearing-house-contract) get-market market-id))))
       (< ratio (to-int (get maintenance-margin-rate market))))
     err false))
+
+;; Public functions
+
+(define-public (liquidate (user principal) (market-id uint))
+  (begin
+    (asserts! (not (is-eq tx-sender user)) ERR-UNAUTHORIZED)
+    (asserts! (is-liquidatable user market-id) ERR-NOT-LIQUIDATABLE)
+    (let* ((pos (unwrap! (contract-call? (var-get clearing-house-contract) get-position user market-id) ERR-NO-POSITION))
+           (margin (get margin pos))
+           (collateral-asset (get collateral-asset-id pos))
+           (bonus (/ (* margin LIQUIDATION-BONUS) BASIS-POINTS))
+           (insurance-amount (/ (* margin INSURANCE-CUT) BASIS-POINTS))
+           (remainder (- margin (+ bonus insurance-amount))))
+      (try! (contract-call? (var-get clearing-house-contract) close-position market-id))
+      (when (> bonus u0)
+        (try! (contract-call? (var-get margin-contract) transfer-collateral
+                (as-contract tx-sender) tx-sender collateral-asset bonus)))
+      (when (> insurance-amount u0)
+        (try! (contract-call? (var-get margin-contract) transfer-collateral
+                (as-contract tx-sender) (var-get insurance-fund) collateral-asset insurance-amount)))
+      (map-set liquidation-history
+        { user: user, market-id: market-id, block: block-height }
+        { liquidated-by: tx-sender, margin-seized: margin, bonus-paid: bonus })
+      (print { event: "liquidation", user: user, market-id: market-id,
+               liquidator: tx-sender, margin-seized: margin, bonus: bonus,
+               insurance: insurance-amount, block: block-height })
+      (ok { margin-seized: margin, bonus: bonus }))))
