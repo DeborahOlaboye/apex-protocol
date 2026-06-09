@@ -82,3 +82,17 @@
         (ok raw-pnl))
       err-code (err err-code))
     ERR-NO-POSITION))
+
+(define-read-only (get-margin-ratio (user principal) (market-id uint))
+  (match (map-get? positions { user: user, market-id: market-id })
+    pos
+    (match (get-unrealized-pnl user market-id)
+      pnl
+      (let* ((margin (to-int (get margin pos)))
+             (effective-margin (+ margin pnl))
+             (notional (to-int (* (get size pos) (get entry-price pos)))))
+        (if (> notional i0)
+          (ok (/ (* effective-margin (to-int BASIS-POINTS)) notional))
+          ERR-NO-POSITION))
+      err-code (err err-code))
+    ERR-NO-POSITION))
