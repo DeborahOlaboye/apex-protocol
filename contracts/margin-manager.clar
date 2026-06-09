@@ -113,3 +113,21 @@
     (add-balance to asset-id amount)
     (print { event: "collateral-transfer", from: from, to: to, asset-id: asset-id, amount: amount })
     (ok true)))
+
+(define-public (authorize-contract (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (map-set authorized-contracts contract true)
+    (ok true)))
+
+(define-public (revoke-contract (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (map-delete authorized-contracts contract)
+    (ok true)))
+
+(define-public (set-sbtc-contract (new-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (var-set sbtc-contract new-contract)
+    (ok true)))
