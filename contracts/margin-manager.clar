@@ -51,3 +51,13 @@
       { user: user, asset-id: asset-id }
       { amount: (- (get amount current) amount), locked: (get locked current) })
     (ok true)))
+
+;; Public functions
+
+(define-public (deposit-stx (amount uint))
+  (begin
+    (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+    (add-balance tx-sender STX-ASSET-ID amount)
+    (print { event: "deposit", user: tx-sender, asset-id: STX-ASSET-ID, amount: amount })
+    (ok true)))
