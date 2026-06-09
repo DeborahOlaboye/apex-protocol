@@ -380,3 +380,47 @@ if (cvToValue(check)) {
   await broadcastTransaction({ transaction: tx, network: 'mainnet' });
 }
 ```
+
+---
+
+## Roadmap
+
+### Phase 1 — Core Protocol (Current)
+- [x] Multi-asset price oracle with staleness protection
+- [x] sBTC and STX collateral management
+- [x] 8-hour funding rate mechanism with cumulative tracking
+- [x] Leveraged long/short perpetual positions
+- [x] Permissionless liquidation with insurance fund
+
+### Phase 2 — Advanced Orders and Risk
+- [ ] Stop-loss and take-profit via Chainhook triggers
+- [ ] Cross-margin mode (single collateral pool across positions)
+- [ ] Portfolio margining with correlation-adjusted risk weights
+- [ ] On-chain options contracts (calls and puts)
+
+### Phase 3 — Decentralization
+- [ ] Multi-oracle aggregation with median price feed
+- [ ] Governance via veSTX voting on protocol parameters
+- [ ] Insurance fund as yield-bearing vault
+- [ ] Keeper network for automated liquidation bots
+
+---
+
+## Contributing
+
+Focus areas for contributions:
+
+- **Clarity audits** — arithmetic overflow/underflow edge cases
+- **Oracle decentralization** — multi-source aggregation
+- **Liquidation bots** — off-chain keepers monitoring margin ratios
+- **Frontend** — trading UI integrating Stacks.js and Leather wallet
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+*Apex Protocol is experimental software. Perpetual futures carry significant risk of loss. Not financial advice.*
