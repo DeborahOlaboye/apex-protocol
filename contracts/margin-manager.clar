@@ -69,3 +69,14 @@
     (add-balance tx-sender SBTC-ASSET-ID amount)
     (print { event: "deposit", user: tx-sender, asset-id: SBTC-ASSET-ID, amount: amount })
     (ok true)))
+
+(define-public (withdraw (asset-id uint) (amount uint))
+  (begin
+    (asserts! (> amount u0) ERR-INVALID-AMOUNT)
+    (asserts! (or (is-eq asset-id STX-ASSET-ID) (is-eq asset-id SBTC-ASSET-ID)) ERR-ASSET-NOT-SUPPORTED)
+    (try! (subtract-balance tx-sender asset-id amount))
+    (if (is-eq asset-id STX-ASSET-ID)
+      (try! (as-contract (stx-transfer? amount tx-sender tx-sender)))
+      (try! (as-contract (contract-call? (var-get sbtc-contract) transfer amount tx-sender tx-sender none))))
+    (print { event: "withdraw", user: tx-sender, asset-id: asset-id, amount: amount })
+    (ok true)))
