@@ -11,3 +11,9 @@
 (define-constant ERR-NOT-FOUND (err u102))
 (define-constant ERR-INVALID-PRICE (err u103))
 (define-constant ERR-ALREADY-AUTHORIZED (err u104))
+
+(define-map price-feeds
+  { asset-id: uint }
+  { price: uint, timestamp: uint, source: principal })
+
+(define-map authorized-oracles principal bool)
