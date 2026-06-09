@@ -205,3 +205,34 @@ This creates equilibrium: longs and shorts are balanced when funding rate approa
 
 5. Withdraw -> margin-manager (withdraw)
 ```
+
+---
+
+## Liquidation Mechanics
+
+A position becomes liquidatable when its **effective margin ratio** falls below the market maintenance margin rate (default 5%).
+
+### Margin Ratio Formula
+
+```
+effective_margin = deposited_margin + unrealized_pnl
+margin_ratio = effective_margin / (size x entry_price)
+liquidatable when: margin_ratio < maintenance_margin_rate
+```
+
+### Liquidation Distribution
+
+```
+seized_margin = position margin
+  |-- 5%  -> liquidator (LIQUIDATION-BONUS = 500 bps)
+  |-- 20% -> insurance fund (INSURANCE-CUT = 2000 bps)
+  |-- 75% -> returned to trader (partial recovery)
+```
+
+### Insurance Fund
+
+The insurance fund absorbs bad debt when a position's losses exceed its collateral due to extreme volatility (gap risk). Without an insurance fund, losses would be socialized across all traders. The 20% cut from every liquidation builds the fund proportionally to protocol activity.
+
+### Why Permissionless Liquidation?
+
+Liquidators earn a 5% bonus — this creates a competitive market of liquidation bots that constantly monitor positions. No trusted admin needed. The protocol stays solvent through economic incentives, not access control.
