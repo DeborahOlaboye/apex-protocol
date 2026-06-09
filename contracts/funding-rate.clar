@@ -75,3 +75,30 @@
           { market-id: market-id }
           { rate: clamped, last-update: block-height, cumulative-rate: i0 }))
       (ok clamped))))
+
+(define-public (apply-funding (market-id uint))
+  (begin
+    (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
+    (let ((data (unwrap! (map-get? funding-rates { market-id: market-id }) ERR-MARKET-NOT-FOUND)))
+      (asserts! (>= block-height (+ (get last-update data) FUNDING-INTERVAL)) ERR-TOO-EARLY)
+      (map-set funding-rates
+        { market-id: market-id }
+        { rate: (get rate data),
+          last-update: block-height,
+          cumulative-rate: (+ (get cumulative-rate data) (get rate data)) })
+      (print { event: "funding-applied", market-id: market-id, rate: (get rate data), block: block-height })
+      (ok (get rate data)))))
+
+(define-public (init-market (market-id uint))
+  (begin
+    (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
+    (map-set funding-rates
+      { market-id: market-id }
+      { rate: i0, last-update: block-height, cumulative-rate: i0 })
+    (ok true)))
+
+(define-public (authorize-contract (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (map-set authorized-contracts contract true)
+    (ok true)))
