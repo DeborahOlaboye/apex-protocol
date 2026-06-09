@@ -45,3 +45,11 @@
         (rate-delta (- current-cumulative entry-cumulative-rate)))
     ;; longs pay when rate > 0, shorts receive; inverted when rate < 0
     (* position-size (/ rate-delta BASIS-POINTS))))
+
+;; Clamp a value between min and max
+(define-private (clamp-rate (rate int))
+  (if (> rate MAX-FUNDING-RATE)
+    MAX-FUNDING-RATE
+    (if (< rate MIN-FUNDING-RATE)
+      MIN-FUNDING-RATE
+      rate)))
