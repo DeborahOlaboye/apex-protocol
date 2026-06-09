@@ -161,3 +161,43 @@
         (print { event: "position-opened", user: tx-sender, market-id: market-id,
                  is-long: is-long, size: size, entry-price: current-price, margin: margin })
         (ok true)))))
+
+(define-public (close-position (market-id uint))
+  (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND))
+        (pos (unwrap! (map-get? positions { user: tx-sender, market-id: market-id }) ERR-NO-POSITION)))
+    (let* ((price-data (try! (contract-call? (var-get oracle-contract) get-price (get base-asset-id market))))
+           (current-price (get price price-data))
+           (entry-price (get entry-price pos))
+           (size (get size pos))
+           (margin (get margin pos))
+           (collateral-asset (get collateral-asset-id pos))
+           (price-delta (if (get is-long pos)
+                          (to-int (- current-price entry-price))
+                          (to-int (- entry-price current-price))))
+           (raw-pnl (* price-delta (to-int size)))
+           (funding-payment (contract-call? (var-get funding-contract)
+                              get-funding-payment market-id
+                              (to-int (if (get is-long pos) size (- u0 size)))
+                              (get entry-funding-rate pos)))
+           (net-pnl (- raw-pnl funding-payment))
+           (effective-margin (+ (to-int margin) net-pnl))
+           (notional (* size entry-price))
+           (return-amount (if (> effective-margin i0) (to-uint effective-margin) u0)))
+      (map-delete positions { user: tx-sender, market-id: market-id })
+      (map-set markets
+        { market-id: market-id }
+        (merge market
+          (if (get is-long pos)
+            { open-interest-long: (if (>= (get open-interest-long market) notional)
+                                    (- (get open-interest-long market) notional) u0),
+              open-interest-short: (get open-interest-short market) }
+            { open-interest-long: (get open-interest-long market),
+              open-interest-short: (if (>= (get open-interest-short market) notional)
+                                      (- (get open-interest-short market) notional) u0) })))
+      (try! (contract-call? (var-get margin-contract) unlock-collateral tx-sender collateral-asset margin))
+      (when (> return-amount u0)
+        (try! (contract-call? (var-get margin-contract) transfer-collateral
+                (as-contract tx-sender) tx-sender collateral-asset return-amount)))
+      (print { event: "position-closed", user: tx-sender, market-id: market-id,
+               pnl: net-pnl, return-amount: return-amount })
+      (ok net-pnl))))
