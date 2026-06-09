@@ -100,3 +100,16 @@
         { user: user, asset-id: asset-id }
         { amount: (get amount current), locked: (- (get locked current) amount) }))
     (ok true)))
+
+(define-public (transfer-collateral (from principal) (to principal) (asset-id uint) (amount uint))
+  (begin
+    (asserts! (is-authorized tx-sender) ERR-UNAUTHORIZED)
+    (let ((from-bal (get-balance from asset-id)))
+      (asserts! (>= (get amount from-bal) amount) ERR-INSUFFICIENT-BALANCE)
+      (map-set collateral-balances
+        { user: from, asset-id: asset-id }
+        { amount: (- (get amount from-bal) amount),
+          locked: (if (>= (get locked from-bal) amount) (- (get locked from-bal) amount) u0) }))
+    (add-balance to asset-id amount)
+    (print { event: "collateral-transfer", from: from, to: to, asset-id: asset-id, amount: amount })
+    (ok true)))
