@@ -40,3 +40,10 @@
     collateral-asset-id: uint,
     entry-funding-rate: int,
     last-updated: uint })
+
+(define-data-var owner principal CONTRACT-OWNER)
+(define-data-var oracle-contract principal CONTRACT-OWNER)
+(define-data-var margin-contract principal CONTRACT-OWNER)
+(define-data-var funding-contract principal CONTRACT-OWNER)
+(define-data-var liquidation-contract principal CONTRACT-OWNER)
+(define-data-var next-market-id uint u1)
