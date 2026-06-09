@@ -80,3 +80,13 @@
       (try! (as-contract (contract-call? (var-get sbtc-contract) transfer amount tx-sender tx-sender none))))
     (print { event: "withdraw", user: tx-sender, asset-id: asset-id, amount: amount })
     (ok true)))
+
+(define-public (lock-collateral (user principal) (asset-id uint) (amount uint))
+  (begin
+    (asserts! (is-authorized tx-sender) ERR-UNAUTHORIZED)
+    (asserts! (>= (get-available-balance user asset-id) amount) ERR-INSUFFICIENT-UNLOCKED)
+    (let ((current (get-balance user asset-id)))
+      (map-set collateral-balances
+        { user: user, asset-id: asset-id }
+        { amount: (get amount current), locked: (+ (get locked current) amount) }))
+    (ok true)))
