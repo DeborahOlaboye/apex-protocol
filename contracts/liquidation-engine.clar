@@ -62,3 +62,21 @@
                liquidator: tx-sender, margin-seized: margin, bonus: bonus,
                insurance: insurance-amount, block: block-height })
       (ok { margin-seized: margin, bonus: bonus }))))
+
+(define-public (set-insurance-fund (address principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (var-set insurance-fund address)
+    (ok true)))
+
+(define-public (set-clearing-house (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (var-set clearing-house-contract contract)
+    (ok true)))
+
+(define-public (set-margin-manager (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
+    (var-set margin-contract contract)
+    (ok true)))
