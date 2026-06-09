@@ -35,3 +35,8 @@
   (let ((feed (unwrap! (map-get? price-feeds { asset-id: asset-id }) ERR-NOT-FOUND)))
     (asserts! (<= (- block-height (get timestamp feed)) STALE-THRESHOLD) ERR-STALE-PRICE)
     (ok { price: (get price feed), timestamp: (get timestamp feed) })))
+
+(define-read-only (is-price-fresh (asset-id uint))
+  (match (map-get? price-feeds { asset-id: asset-id })
+    feed (<= (- block-height (get timestamp feed)) STALE-THRESHOLD)
+    false))
