@@ -62,3 +62,45 @@ sBTC is a 1:1 Bitcoin-backed asset on Stacks, with $545M TVL. Using sBTC as marg
 ### Clarity Safety
 
 Clarity is intentionally Turing-incomplete. You can statically analyze whether a contract will run out of gas, whether arithmetic will overflow, and what state transitions are possible. This is ideal for financial contracts where predictability is critical.
+
+---
+
+## Architecture
+
+```
++-------------------------------------------------------------------+
+|                        Apex Protocol                              |
+|                                                                   |
+|  +-----------+    +------------------+    +-------------------+  |
+|  |  Oracle   |--->|  Clearing House  |--->| Liquidation Engine|  |
+|  |           |    |                  |    |                   |  |
+|  | BTC/USD   |    | open-position    |    | is-liquidatable   |  |
+|  | STX/USD   |    | close-position   |    | liquidate         |  |
+|  | staleness |    | unrealized-pnl   |    | insurance fund    |  |
+|  +-----------+    | margin-ratio     |    +-------------------+  |
+|                   +--------+---------+                            |
+|                            |                                      |
+|  +-------------------------v---------------------------------+    |
+|  |                   Margin Manager                          |    |
+|  |                                                           |    |
+|  | deposit-stx / deposit-sbtc    lock-collateral             |    |
+|  | withdraw                      unlock-collateral           |    |
+|  | transfer-collateral (P&L)     per-user balances           |    |
+|  +-----------------------------------------------------------+    |
+|                                                                   |
+|  +-----------------------------------------------------------+   |
+|  |                    Funding Rate                            |   |
+|  | calculate-funding-rate (mark vs index)                    |   |
+|  | apply-funding every 150 blocks (~8 hours)                 |   |
+|  | cumulative rate tracking for per-position P&L             |   |
+|  +-----------------------------------------------------------+   |
++-------------------------------------------------------------------+
+```
+
+**Data flow for open-position:**
+1. Trader calls `clearing-house::open-position`
+2. Clearing house fetches live price from `oracle::get-price`
+3. Validates leverage: `notional / margin <= max-leverage`
+4. Calls `margin-manager::lock-collateral` to freeze margin
+5. Records entry price and entry funding rate cumulative in positions map
+6. Updates market open interest (long or short bucket)
