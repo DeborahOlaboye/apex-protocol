@@ -298,3 +298,85 @@ clarinet call margin-manager authorize-contract <liquidation-engine-contract>
 # Authorize clearing-house to apply funding rates
 clarinet call funding-rate authorize-contract <clearing-house-contract>
 ```
+
+---
+
+## Usage Examples
+
+### Deposit Collateral
+
+```typescript
+import { makeContractCall, uintCV, broadcastTransaction } from '@stacks/transactions';
+
+const tx = await makeContractCall({
+  contractAddress: DEPLOYER,
+  contractName: 'margin-manager',
+  functionName: 'deposit-stx',
+  functionArgs: [uintCV(100_000_000)], // 100 STX
+  senderKey: privateKey,
+  network: 'mainnet',
+});
+await broadcastTransaction({ transaction: tx, network: 'mainnet' });
+```
+
+### Open a Long Position
+
+```typescript
+const tx = await makeContractCall({
+  contractAddress: DEPLOYER,
+  contractName: 'clearing-house',
+  functionName: 'open-position',
+  functionArgs: [
+    uintCV(1),      // market-id (BTC/USD = 1)
+    boolCV(true),   // is-long
+    uintCV(100),    // size
+    uintCV(5_000_000), // margin (5 STX)
+    uintCV(1),      // collateral-asset-id (STX)
+  ],
+  senderKey: privateKey,
+  network: 'mainnet',
+});
+```
+
+### Query Unrealized P&L
+
+```typescript
+import { callReadOnlyFunction, standardPrincipalCV, uintCV, cvToValue } from '@stacks/transactions';
+
+const result = await callReadOnlyFunction({
+  contractAddress: DEPLOYER,
+  contractName: 'clearing-house',
+  functionName: 'get-unrealized-pnl',
+  functionArgs: [
+    standardPrincipalCV('SP_TRADER_ADDRESS'),
+    uintCV(1), // market-id
+  ],
+  network: 'mainnet',
+  senderAddress: DEPLOYER,
+});
+console.log('Unrealized PnL:', cvToValue(result));
+```
+
+### Liquidate an Undercollateralized Position
+
+```typescript
+// Check first
+const check = await callReadOnlyFunction({
+  contractName: 'liquidation-engine',
+  functionName: 'is-liquidatable',
+  functionArgs: [standardPrincipalCV(targetUser), uintCV(1)],
+  network: 'mainnet',
+  senderAddress: DEPLOYER,
+});
+
+if (cvToValue(check)) {
+  const tx = await makeContractCall({
+    contractName: 'liquidation-engine',
+    functionName: 'liquidate',
+    functionArgs: [standardPrincipalCV(targetUser), uintCV(1)],
+    senderKey: liquidatorKey,
+    network: 'mainnet',
+  });
+  await broadcastTransaction({ transaction: tx, network: 'mainnet' });
+}
+```
