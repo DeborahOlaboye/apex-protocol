@@ -201,3 +201,25 @@
       (print { event: "position-closed", user: tx-sender, market-id: market-id,
                pnl: net-pnl, return-amount: return-amount })
       (ok net-pnl))))
+
+(define-public (add-margin (market-id uint) (amount uint))
+  (let ((pos (unwrap! (map-get? positions { user: tx-sender, market-id: market-id }) ERR-NO-POSITION)))
+    (asserts! (> amount u0) ERR-INSUFFICIENT-MARGIN)
+    (try! (contract-call? (var-get margin-contract) lock-collateral
+            tx-sender (get collateral-asset-id pos) amount))
+    (map-set positions
+      { user: tx-sender, market-id: market-id }
+      (merge pos { margin: (+ (get margin pos) amount) }))
+    (print { event: "margin-added", user: tx-sender, market-id: market-id, amount: amount })
+    (ok true)))
+
+;; Config setters
+
+(define-public (set-oracle (contract principal))
+  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set oracle-contract contract) (ok true)))
+(define-public (set-margin-manager (contract principal))
+  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set margin-contract contract) (ok true)))
+(define-public (set-funding-rate (contract principal))
+  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set funding-contract contract) (ok true)))
+(define-public (set-liquidation-engine (contract principal))
+  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set liquidation-contract contract) (ok true)))
