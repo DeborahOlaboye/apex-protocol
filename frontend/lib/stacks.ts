@@ -72,3 +72,25 @@ export async function getMarginRatio(userAddress: string, marketId: number) {
     uintCV(marketId),
   ]);
 }
+
+export async function getPrice(assetId: number) {
+  return readOnly('oracle', 'get-price', [uintCV(assetId)]);
+}
+
+export async function getLatestPrice(assetId: number) {
+  return readOnly('oracle', 'get-latest-price', [uintCV(assetId)]);
+}
+
+export async function getBalance(userAddress: string, assetId: number) {
+  return readOnly('margin-manager', 'get-balance', [
+    standardPrincipalCV(userAddress),
+    uintCV(assetId),
+  ]);
+}
+
+export async function getAvailableBalance(userAddress: string, assetId: number) {
+  return readOnly('margin-manager', 'get-available-balance', [
+    standardPrincipalCV(userAddress),
+    uintCV(assetId),
+  ]);
+}
