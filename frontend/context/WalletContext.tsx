@@ -39,3 +39,27 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       // user cancelled
     }
   }, []);
+
+  const handleDisconnect = useCallback(() => {
+    stacksDisconnect();
+    setAddress(null);
+    localStorage.removeItem('apex_address');
+  }, []);
+
+  return (
+    <WalletContext.Provider
+      value={{
+        connected: !!address,
+        address,
+        connect: handleConnect,
+        disconnect: handleDisconnect,
+      }}
+    >
+      {children}
+    </WalletContext.Provider>
+  );
+}
+
+export function useWallet() {
+  return useContext(WalletContext);
+}
