@@ -51,3 +51,42 @@ export function useMarket(marketId: number) {
 
   return { market, price, loading, refetch: fetchMarket };
 }
+
+export function useAllMarkets() {
+  const [markets, setMarkets] = useState<Market[]>(Object.values(MARKETS));
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    const ids = Object.keys(MARKETS).map(Number);
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const base = MARKETS[id as keyof typeof MARKETS];
+        try {
+          const [m, p] = await Promise.allSettled([getMarket(id), getLatestPrice(base.assetId)]);
+          const market = m.status === 'fulfilled' ? (m.value as Record<string, unknown>) : null;
+          const priceData = p.status === 'fulfilled' ? (p.value as Record<string, unknown>) : null;
+          return {
+            ...base,
+            isActive: (market?.['is-active'] as boolean) ?? true,
+            openInterestLong: (market?.['open-interest-long'] as number) ?? 0,
+            openInterestShort: (market?.['open-interest-short'] as number) ?? 0,
+            price: priceData ? (priceData['price'] as number) : undefined,
+          } as Market;
+        } catch (_) {
+          return { ...base } as Market;
+        }
+      }),
+    );
+
+    setMarkets(results.filter((r) => r.status === 'fulfilled').map((r) => (r as PromiseFulfilledResult<Market>).value));
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+    const interval = setInterval(fetchAll, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchAll]);
+
+  return { markets, loading, refetch: fetchAll };
+}
