@@ -106,3 +106,30 @@ export function CollateralPanel() {
           </button>
         ))}
       </div>
+
+      <div className="space-y-3">
+        <Input label="Amount" type="number" placeholder="0.0000" min="0" suffix={asset}
+          value={amount} onChange={(e) => setAmount(e.target.value)} />
+        {action === 'withdraw' && (
+          <p className="text-xs text-[var(--text-muted)]">
+            Available: {microToMacro(balance.available).toFixed(4)} {asset}
+          </p>
+        )}
+        <Button variant="primary" size="lg" className="w-full"
+          disabled={submitting || !parseFloat(amount)} onClick={handleSubmit}>
+          {!connected
+            ? 'Connect Wallet'
+            : submitting
+            ? `${action === 'deposit' ? 'Depositing' : 'Withdrawing'}…`
+            : `${action === 'deposit' ? 'Deposit' : 'Withdraw'} ${asset}`}
+        </Button>
+        {txId && (
+          <a href={`https://explorer.hiro.so/txid/${txId}?chain=mainnet`} target="_blank"
+            rel="noopener noreferrer" className="block text-xs text-green-400 underline break-all">
+            Tx submitted: {txId.slice(0, 20)}…
+          </a>
+        )}
+      </div>
+    </Card>
+  );
+}
