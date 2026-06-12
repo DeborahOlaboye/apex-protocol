@@ -33,12 +33,12 @@
 
 (define-read-only (get-price (asset-id uint))
   (let ((feed (unwrap! (map-get? price-feeds { asset-id: asset-id }) ERR-NOT-FOUND)))
-    (asserts! (<= (- block-height (get timestamp feed)) STALE-THRESHOLD) ERR-STALE-PRICE)
+    (asserts! (<= (- stacks-block-height (get timestamp feed)) STALE-THRESHOLD) ERR-STALE-PRICE)
     (ok { price: (get price feed), timestamp: (get timestamp feed) })))
 
 (define-read-only (is-price-fresh (asset-id uint))
   (match (map-get? price-feeds { asset-id: asset-id })
-    feed (<= (- block-height (get timestamp feed)) STALE-THRESHOLD)
+    feed (<= (- stacks-block-height (get timestamp feed)) STALE-THRESHOLD)
     false))
 
 ;; Public functions
@@ -49,8 +49,8 @@
     (asserts! (> price u0) ERR-INVALID-PRICE)
     (map-set price-feeds
       { asset-id: asset-id }
-      { price: price, timestamp: block-height, source: tx-sender })
-    (print { event: "price-submitted", asset-id: asset-id, price: price, source: tx-sender, block: block-height })
+      { price: price, timestamp: stacks-block-height, source: tx-sender })
+    (print { event: "price-submitted", asset-id: asset-id, price: price, source: tx-sender, block: stacks-block-height })
     (ok true)))
 
 (define-public (add-oracle (oracle principal))
