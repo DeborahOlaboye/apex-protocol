@@ -58,3 +58,17 @@ export async function getPosition(userAddress: string, marketId: number) {
     uintCV(marketId),
   ]);
 }
+
+export async function getUnrealizedPnl(userAddress: string, marketId: number) {
+  return readOnly('clearing-house', 'get-unrealized-pnl', [
+    standardPrincipalCV(userAddress),
+    uintCV(marketId),
+  ]);
+}
+
+export async function getMarginRatio(userAddress: string, marketId: number) {
+  return readOnly('clearing-house', 'get-margin-ratio', [
+    standardPrincipalCV(userAddress),
+    uintCV(marketId),
+  ]);
+}
