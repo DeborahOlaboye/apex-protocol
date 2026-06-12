@@ -26,3 +26,20 @@ export interface Position {
   unrealizedPnl?: number;
   marginRatio?: number;
 }
+
+export interface CollateralBalance {
+  amount: number;
+  locked: number;
+  available: number;
+}
+
+export interface PriceData {
+  price: number;
+  timestamp: number;
+}
+
+export interface FundingRate {
+  rate: number;
+  cumulativeRate: number;
+  nextFundingBlock: number;
+}
