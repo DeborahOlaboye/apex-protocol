@@ -12,3 +12,8 @@ export const ASSET_IDS = {
   STX: 1,
   SBTC: 2,
 } as const;
+
+export const MARKETS = {
+  1: { id: 1, name: 'BTC/USD', baseAsset: 'BTC', quoteAsset: 'USD', assetId: ASSET_IDS.SBTC },
+  2: { id: 2, name: 'STX/USD', baseAsset: 'STX', quoteAsset: 'USD', assetId: ASSET_IDS.STX },
+} as const;
