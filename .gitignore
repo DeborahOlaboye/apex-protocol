@@ -4,3 +4,9 @@
 *.swo
 node_modules/
 .DS_Store
+settings/Mainnet.toml
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/.env*.local
