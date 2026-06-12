@@ -52,3 +52,25 @@ export function Header() {
             );
           })}
         </nav>
+
+        {/* Wallet */}
+        <div className="flex items-center gap-2">
+          {connected && address ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden text-xs text-[var(--text-muted)] sm:inline">
+                {truncateAddress(address)}
+              </span>
+              <Button variant="secondary" size="sm" onClick={disconnect}>
+                Disconnect
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={connect}>
+              Connect Wallet
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
