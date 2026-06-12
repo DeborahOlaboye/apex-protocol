@@ -43,3 +43,20 @@ export interface FundingRate {
   cumulativeRate: number;
   nextFundingBlock: number;
 }
+
+export type CollateralAsset = 'STX' | 'SBTC';
+
+export interface TradeFormData {
+  marketId: number;
+  isLong: boolean;
+  size: string;
+  margin: string;
+  leverage: number;
+  collateralAsset: CollateralAsset;
+}
+
+export interface WalletState {
+  connected: boolean;
+  address: string | null;
+  network: string;
+}
