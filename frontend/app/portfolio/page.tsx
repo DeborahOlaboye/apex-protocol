@@ -57,3 +57,19 @@ export default function PortfolioPage() {
           </Card>
         ))}
       </div>
+
+      {/* Main content */}
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {/* Positions table */}
+        <div className="flex-1">
+          <PositionsTable address={address} />
+        </div>
+
+        {/* Collateral panel */}
+        <div className="w-full lg:w-[320px] shrink-0">
+          <CollateralPanel />
+        </div>
+      </div>
+    </div>
+  );
+}
