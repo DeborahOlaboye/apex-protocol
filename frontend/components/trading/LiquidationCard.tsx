@@ -35,3 +35,57 @@ export function LiquidationCard({ marketId }: LiquidationCardProps) {
       setChecking(false);
     }
   }
+
+  function handleLiquidate() {
+    if (!connected) { connect(); return; }
+    if (!targetAddress || !liquidatable) return;
+    setSubmitting(true);
+    const tx = buildLiquidate(targetAddress, marketId);
+    openContractCall({
+      contractAddress: DEPLOYER,
+      contractName: tx.contractName,
+      functionName: tx.functionName,
+      functionArgs: tx.functionArgs,
+      network: NETWORK,
+      onFinish: (data) => { setTxId(data.txId); setLiquidatable(null); setSubmitting(false); },
+      onCancel: () => setSubmitting(false),
+    });
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Liquidation Bot</CardTitle>
+        <Badge variant="warning">+5% Bonus</Badge>
+      </CardHeader>
+      <div className="space-y-3">
+        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+          Check if a position is undercollateralised and liquidate it to earn a 5% bonus.
+        </p>
+        <Input label="Trader address" placeholder="SP..." value={targetAddress}
+          onChange={(e) => setTargetAddress(e.target.value)} />
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" className="flex-1" onClick={handleCheck}
+            disabled={checking || !targetAddress}>
+            {checking ? 'Checking…' : 'Check'}
+          </Button>
+          <Button variant={liquidatable ? 'danger' : 'secondary'} size="sm" className="flex-1"
+            disabled={!liquidatable || submitting} onClick={handleLiquidate}>
+            {submitting ? 'Liquidating…' : 'Liquidate'}
+          </Button>
+        </div>
+        {liquidatable !== null && (
+          <p className={`text-xs font-semibold ${liquidatable ? 'text-red-400' : 'text-green-400'}`}>
+            {liquidatable ? '⚠ Position is liquidatable' : '✓ Position is healthy'}
+          </p>
+        )}
+        {txId && (
+          <a href={`https://explorer.hiro.so/txid/${txId}?chain=mainnet`} target="_blank"
+            rel="noopener noreferrer" className="text-xs text-green-400 underline break-all">
+            Tx: {txId.slice(0, 20)}…
+          </a>
+        )}
+      </div>
+    </Card>
+  );
+}
