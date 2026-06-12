@@ -28,3 +28,15 @@ export function formatNumber(value: number, decimals = 2): string {
 export function formatPercent(bps: number, decimals = 2): string {
   return `${((bps / BASIS_POINTS) * 100).toFixed(decimals)}%`;
 }
+
+export function bpsToPercent(bps: number): number {
+  return (bps / BASIS_POINTS) * 100;
+}
+
+export function microToMacro(micro: number): number {
+  return micro / 1_000_000;
+}
+
+export function macroToMicro(macro: number): number {
+  return Math.floor(macro * 1_000_000);
+}
