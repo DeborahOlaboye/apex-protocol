@@ -29,3 +29,32 @@ export async function readOnly<T>(
   });
   return cvToValue(result) as T;
 }
+
+export async function contractCall(
+  contractName: string,
+  functionName: string,
+  functionArgs: ClarityValue[],
+  senderKey: string,
+) {
+  const tx = await makeContractCall({
+    contractAddress: DEPLOYER,
+    contractName,
+    functionName,
+    functionArgs,
+    senderKey,
+    network: NETWORK as 'mainnet' | 'testnet',
+  });
+  return broadcastTransaction({ transaction: tx, network: NETWORK as 'mainnet' | 'testnet' });
+}
+
+// Read-only helpers
+export async function getMarket(marketId: number) {
+  return readOnly('clearing-house', 'get-market', [uintCV(marketId)]);
+}
+
+export async function getPosition(userAddress: string, marketId: number) {
+  return readOnly('clearing-house', 'get-position', [
+    standardPrincipalCV(userAddress),
+    uintCV(marketId),
+  ]);
+}
