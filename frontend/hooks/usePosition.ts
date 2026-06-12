@@ -51,3 +51,16 @@ export function usePosition(address: string | null, marketId: number) {
 
   return { position, loading, refetch: fetchPosition };
 }
+
+export function useIsLiquidatable(address: string | null, marketId: number) {
+  const [liquidatable, setLiquidatable] = useState(false);
+
+  useEffect(() => {
+    if (!address) return;
+    isLiquidatable(address, marketId)
+      .then((v) => setLiquidatable(v as boolean))
+      .catch(() => setLiquidatable(false));
+  }, [address, marketId]);
+
+  return liquidatable;
+}
