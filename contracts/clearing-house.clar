@@ -42,10 +42,6 @@
     last-updated: uint })
 
 (define-data-var owner principal CONTRACT-OWNER)
-(define-data-var oracle-contract principal CONTRACT-OWNER)
-(define-data-var margin-contract principal CONTRACT-OWNER)
-(define-data-var funding-contract principal CONTRACT-OWNER)
-(define-data-var liquidation-contract principal CONTRACT-OWNER)
 (define-data-var next-market-id uint u1)
 
 ;; Read-only functions
@@ -62,7 +58,7 @@
 (define-read-only (get-position-value (user principal) (market-id uint))
   (match (map-get? positions { user: user, market-id: market-id })
     pos
-    (match (contract-call? (var-get oracle-contract) get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
+    (match (contract-call? .oracle get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
       price-data (ok (* (get size pos) (get price price-data)))
       err-code (err err-code))
     ERR-NO-POSITION))
@@ -70,9 +66,9 @@
 (define-read-only (get-unrealized-pnl (user principal) (market-id uint))
   (match (map-get? positions { user: user, market-id: market-id })
     pos
-    (match (contract-call? (var-get oracle-contract) get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
+    (match (contract-call? .oracle get-price (get base-asset-id (unwrap-panic (map-get? markets { market-id: market-id }))))
       price-data
-      (let* ((current-price (get price price-data))
+      (let ((current-price (get price price-data))
              (entry-price (get entry-price pos))
              (size (get size pos))
              (price-delta (if (get is-long pos)
@@ -88,10 +84,10 @@
     pos
     (match (get-unrealized-pnl user market-id)
       pnl
-      (let* ((margin (to-int (get margin pos)))
+      (let ((margin (to-int (get margin pos)))
              (effective-margin (+ margin pnl))
              (notional (to-int (* (get size pos) (get entry-price pos)))))
-        (if (> notional i0)
+        (if (> notional 0)
           (ok (/ (* effective-margin (to-int BASIS-POINTS)) notional))
           ERR-NO-POSITION))
       err-code (err err-code))
@@ -113,9 +109,9 @@
           maintenance-margin-rate: maintenance-margin-rate,
           open-interest-long: u0,
           open-interest-short: u0,
-          created-at: block-height })
+          created-at: stacks-block-height })
       (var-set next-market-id (+ market-id u1))
-      (try! (contract-call? (var-get funding-contract) init-market market-id))
+      (try! (contract-call? .funding-rate init-market market-id))
       (print { event: "market-created", market-id: market-id, base-asset-id: base-asset-id })
       (ok market-id))))
 
@@ -134,13 +130,13 @@
     (asserts! (not (has-position tx-sender market-id)) ERR-POSITION-EXISTS)
     (asserts! (> size u0) ERR-INVALID-SIZE)
     (asserts! (> margin u0) ERR-INSUFFICIENT-MARGIN)
-    (let* ((price-data (try! (contract-call? (var-get oracle-contract) get-price (get base-asset-id market))))
+    (let ((price-data (try! (contract-call? .oracle get-price (get base-asset-id market))))
            (current-price (get price price-data))
            (notional (* size current-price))
            (required-margin (/ notional (get max-leverage market))))
       (asserts! (>= margin required-margin) ERR-LEVERAGE-EXCEEDED)
-      (try! (contract-call? (var-get margin-contract) lock-collateral tx-sender collateral-asset-id margin))
-      (let ((entry-funding (contract-call? (var-get funding-contract) get-cumulative-rate market-id)))
+      (try! (contract-call? .margin-manager lock-collateral tx-sender collateral-asset-id margin))
+      (let ((entry-funding (contract-call? .funding-rate get-cumulative-rate market-id)))
         (map-set positions
           { user: tx-sender, market-id: market-id }
           { size: size,
@@ -149,7 +145,7 @@
             margin: margin,
             collateral-asset-id: collateral-asset-id,
             entry-funding-rate: entry-funding,
-            last-updated: block-height })
+            last-updated: stacks-block-height })
         (map-set markets
           { market-id: market-id }
           (merge market
@@ -165,7 +161,7 @@
 (define-public (close-position (market-id uint))
   (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND))
         (pos (unwrap! (map-get? positions { user: tx-sender, market-id: market-id }) ERR-NO-POSITION)))
-    (let* ((price-data (try! (contract-call? (var-get oracle-contract) get-price (get base-asset-id market))))
+    (let ((price-data (try! (contract-call? .oracle get-price (get base-asset-id market))))
            (current-price (get price price-data))
            (entry-price (get entry-price pos))
            (size (get size pos))
@@ -175,14 +171,14 @@
                           (to-int (- current-price entry-price))
                           (to-int (- entry-price current-price))))
            (raw-pnl (* price-delta (to-int size)))
-           (funding-payment (contract-call? (var-get funding-contract)
+           (funding-payment (contract-call? .funding-rate
                               get-funding-payment market-id
-                              (to-int (if (get is-long pos) size (- u0 size)))
+                              (if (get is-long pos) (to-int size) (- 0 (to-int size)))
                               (get entry-funding-rate pos)))
            (net-pnl (- raw-pnl funding-payment))
            (effective-margin (+ (to-int margin) net-pnl))
            (notional (* size entry-price))
-           (return-amount (if (> effective-margin i0) (to-uint effective-margin) u0)))
+           (return-amount (if (> effective-margin 0) (to-uint effective-margin) u0)))
       (map-delete positions { user: tx-sender, market-id: market-id })
       (map-set markets
         { market-id: market-id }
@@ -194,10 +190,11 @@
             { open-interest-long: (get open-interest-long market),
               open-interest-short: (if (>= (get open-interest-short market) notional)
                                       (- (get open-interest-short market) notional) u0) })))
-      (try! (contract-call? (var-get margin-contract) unlock-collateral tx-sender collateral-asset margin))
-      (when (> return-amount u0)
-        (try! (contract-call? (var-get margin-contract) transfer-collateral
-                (as-contract tx-sender) tx-sender collateral-asset return-amount)))
+      (try! (contract-call? .margin-manager unlock-collateral tx-sender collateral-asset margin))
+      (if (> return-amount u0)
+        (try! (contract-call? .margin-manager transfer-collateral
+                (as-contract tx-sender) tx-sender collateral-asset return-amount))
+        true)
       (print { event: "position-closed", user: tx-sender, market-id: market-id,
                pnl: net-pnl, return-amount: return-amount })
       (ok net-pnl))))
@@ -205,7 +202,7 @@
 (define-public (add-margin (market-id uint) (amount uint))
   (let ((pos (unwrap! (map-get? positions { user: tx-sender, market-id: market-id }) ERR-NO-POSITION)))
     (asserts! (> amount u0) ERR-INSUFFICIENT-MARGIN)
-    (try! (contract-call? (var-get margin-contract) lock-collateral
+    (try! (contract-call? .margin-manager lock-collateral
             tx-sender (get collateral-asset-id pos) amount))
     (map-set positions
       { user: tx-sender, market-id: market-id }
@@ -213,13 +210,50 @@
     (print { event: "margin-added", user: tx-sender, market-id: market-id, amount: amount })
     (ok true)))
 
+;; Called exclusively by liquidation-engine to close a specific user's position
+(define-public (close-position-for (user principal) (market-id uint))
+  (let ((market (unwrap! (map-get? markets { market-id: market-id }) ERR-MARKET-NOT-FOUND))
+        (pos (unwrap! (map-get? positions { user: user, market-id: market-id }) ERR-NO-POSITION)))
+    (asserts! (is-eq tx-sender 'SP3PEDBPAAV5ZE0YY4R5Q2P7ZHPB0TQ8161KK0ZWS.liquidation-engine) ERR-UNAUTHORIZED)
+    (let ((price-data (try! (contract-call? .oracle get-price (get base-asset-id market))))
+           (current-price (get price price-data))
+           (entry-price (get entry-price pos))
+           (size (get size pos))
+           (margin (get margin pos))
+           (collateral-asset (get collateral-asset-id pos))
+           (price-delta (if (get is-long pos)
+                          (to-int (- current-price entry-price))
+                          (to-int (- entry-price current-price))))
+           (raw-pnl (* price-delta (to-int size)))
+           (funding-payment (contract-call? .funding-rate
+                              get-funding-payment market-id
+                              (if (get is-long pos) (to-int size) (- 0 (to-int size)))
+                              (get entry-funding-rate pos)))
+           (net-pnl (- raw-pnl funding-payment))
+           (effective-margin (+ (to-int margin) net-pnl))
+           (notional (* size entry-price))
+           (return-amount (if (> effective-margin 0) (to-uint effective-margin) u0)))
+      (map-delete positions { user: user, market-id: market-id })
+      (map-set markets
+        { market-id: market-id }
+        (merge market
+          (if (get is-long pos)
+            { open-interest-long: (if (>= (get open-interest-long market) notional)
+                                    (- (get open-interest-long market) notional) u0),
+              open-interest-short: (get open-interest-short market) }
+            { open-interest-long: (get open-interest-long market),
+              open-interest-short: (if (>= (get open-interest-short market) notional)
+                                      (- (get open-interest-short market) notional) u0) })))
+      (try! (contract-call? .margin-manager unlock-collateral user collateral-asset margin))
+      (if (> return-amount u0)
+        (try! (contract-call? .margin-manager transfer-collateral
+                (as-contract tx-sender) user collateral-asset return-amount))
+        true)
+      (print { event: "position-closed-by-liquidation", user: user, market-id: market-id,
+               pnl: net-pnl, return-amount: return-amount })
+      (ok { net-pnl: net-pnl, return-amount: return-amount, collateral-asset: collateral-asset }))))
+
 ;; Config setters
 
-(define-public (set-oracle (contract principal))
-  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set oracle-contract contract) (ok true)))
-(define-public (set-margin-manager (contract principal))
-  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set margin-contract contract) (ok true)))
-(define-public (set-funding-rate (contract principal))
-  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set funding-contract contract) (ok true)))
-(define-public (set-liquidation-engine (contract principal))
-  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set liquidation-contract contract) (ok true)))
+(define-public (transfer-ownership (new-owner principal))
+  (begin (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED) (var-set owner new-owner) (ok true)))
