@@ -218,3 +218,22 @@ export function OrderPanel({ market }: OrderPanelProps) {
           </Button>
         </div>
       )}
+
+      {/* Close form */}
+      {tab === 'close' && (
+        <div className="space-y-3">
+          {!position && !posLoading && (
+            <p className="text-center text-xs text-[var(--text-muted)] py-6">No open position on this market.</p>
+          )}
+          {position && (
+            <>
+              <div className="rounded-lg bg-[var(--surface-elevated)] p-3 text-xs">
+                <p className="text-[var(--text-muted)]">Closing your {position.isLong ? 'Long' : 'Short'} position will settle all P&L and unlock your margin.</p>
+              </div>
+              <Button variant="danger" size="lg" className="w-full" disabled={submitting} onClick={handleClose}>
+                {submitting ? 'Closing…' : 'Close Position'}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
