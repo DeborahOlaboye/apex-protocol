@@ -105,3 +105,72 @@ export async function isLiquidatable(userAddress: string, marketId: number) {
 export async function getCumulativeRate(marketId: number) {
   return readOnly('funding-rate', 'get-cumulative-rate', [uintCV(marketId)]);
 }
+
+// Transaction builders (used with @stacks/connect openContractCall)
+export function buildOpenPosition(
+  marketId: number,
+  isLong: boolean,
+  size: number,
+  margin: number,
+  collateralAssetId: number,
+): { contractName: string; functionName: string; functionArgs: ClarityValue[] } {
+  return {
+    contractName: 'clearing-house',
+    functionName: 'open-position',
+    functionArgs: [
+      uintCV(marketId),
+      boolCV(isLong),
+      uintCV(size),
+      uintCV(margin),
+      uintCV(collateralAssetId),
+    ],
+  };
+}
+
+export function buildClosePosition(marketId: number) {
+  return {
+    contractName: 'clearing-house',
+    functionName: 'close-position',
+    functionArgs: [uintCV(marketId)],
+  };
+}
+
+export function buildAddMargin(marketId: number, amount: number) {
+  return {
+    contractName: 'clearing-house',
+    functionName: 'add-margin',
+    functionArgs: [uintCV(marketId), uintCV(amount)],
+  };
+}
+
+export function buildDepositStx(amount: number) {
+  return {
+    contractName: 'margin-manager',
+    functionName: 'deposit-stx',
+    functionArgs: [uintCV(amount)],
+  };
+}
+
+export function buildDepositSbtc(amount: number) {
+  return {
+    contractName: 'margin-manager',
+    functionName: 'deposit-sbtc',
+    functionArgs: [uintCV(amount)],
+  };
+}
+
+export function buildWithdraw(assetId: number, amount: number) {
+  return {
+    contractName: 'margin-manager',
+    functionName: 'withdraw',
+    functionArgs: [uintCV(assetId), uintCV(amount)],
+  };
+}
+
+export function buildLiquidate(targetUser: string, marketId: number) {
+  return {
+    contractName: 'liquidation-engine',
+    functionName: 'liquidate',
+    functionArgs: [standardPrincipalCV(targetUser), uintCV(marketId)],
+  };
+}
