@@ -94,3 +94,14 @@ export async function getAvailableBalance(userAddress: string, assetId: number) 
     uintCV(assetId),
   ]);
 }
+
+export async function isLiquidatable(userAddress: string, marketId: number) {
+  return readOnly('liquidation-engine', 'is-liquidatable', [
+    standardPrincipalCV(userAddress),
+    uintCV(marketId),
+  ]);
+}
+
+export async function getCumulativeRate(marketId: number) {
+  return readOnly('funding-rate', 'get-cumulative-rate', [uintCV(marketId)]);
+}
