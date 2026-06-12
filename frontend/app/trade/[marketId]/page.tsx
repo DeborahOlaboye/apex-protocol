@@ -58,3 +58,24 @@ export default function TradePage({ params }: { params: Promise<Params> }) {
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Chart placeholder */}
+        <div className="flex-1 border-r border-[var(--border)] flex flex-col items-center justify-center bg-[var(--surface)] text-[var(--text-muted)] gap-3 min-h-[400px]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface-elevated)]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-[var(--text-muted)]">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <p className="text-sm">TradingView chart integration</p>
+          <p className="text-xs text-[var(--text-muted)]">Connect a TradingView widget or Pyth price feed chart here</p>
+        </div>
+
+        {/* Right panel */}
+        <div className="w-[320px] shrink-0 flex flex-col gap-3 overflow-y-auto p-3 bg-[var(--background)]">
+          {market && <OrderPanel market={market} />}
+          <FundingRateCard marketId={id} />
+          <LiquidationCard marketId={id} />
+        </div>
+      </div>
+    </div>
+  );
+}
