@@ -1,12 +1,19 @@
 'use client';
 
 import { useWallet } from '@/context/WalletContext';
+import { useCollateral } from '@/hooks/useCollateral';
+import { CollateralPanel } from '@/components/portfolio/CollateralPanel';
+import { PositionsTable } from '@/components/portfolio/PositionsTable';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { microToMacro, truncateAddress } from '@/lib/utils';
 import { Wallet } from 'lucide-react';
 
 export default function PortfolioPage() {
-  const { connected, connect } = useWallet();
-  if (!connected) {
+  const { connected, address, connect } = useWallet();
+  const { stxBalance, sbtcBalance, loading } = useCollateral(address);
+
+  if (!connected || !address) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-32">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--surface-elevated)]">
@@ -20,5 +27,33 @@ export default function PortfolioPage() {
       </div>
     );
   }
-  return <div className="p-8"><p>Portfolio loaded</p></div>;
-}
+
+  const totalStx = microToMacro(stxBalance.amount);
+  const totalSbtc = microToMacro(sbtcBalance.amount);
+  const availStx = microToMacro(stxBalance.available);
+  const availSbtc = microToMacro(sbtcBalance.available);
+
+  return (
+    <div className="mx-auto max-w-[1400px] px-4 py-8 space-y-6">
+      {/* Account header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Account</p>
+          <p className="font-mono text-sm text-[var(--text-primary)]">{address}</p>
+        </div>
+      </div>
+
+      {/* Balance summary */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: 'Total STX', value: loading ? '…' : `${totalStx.toFixed(4)} STX` },
+          { label: 'Available STX', value: loading ? '…' : `${availStx.toFixed(4)} STX` },
+          { label: 'Total sBTC', value: loading ? '…' : `${totalSbtc.toFixed(8)} sBTC` },
+          { label: 'Available sBTC', value: loading ? '…' : `${availSbtc.toFixed(8)} sBTC` },
+        ].map(({ label, value }) => (
+          <Card key={label}>
+            <p className="text-xs text-[var(--text-muted)] mb-1">{label}</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)] font-mono">{value}</p>
+          </Card>
+        ))}
+      </div>
