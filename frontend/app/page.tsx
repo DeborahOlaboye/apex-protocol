@@ -153,3 +153,35 @@ export default function MarketsPage() {
           </table>
         </div>
       </div>
+
+      {/* Feature callouts */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          {
+            icon: Shield,
+            title: 'Bitcoin-Secured',
+            desc: 'sBTC collateral is backed 1:1 by real Bitcoin, not a bridged synthetic.',
+          },
+          {
+            icon: Zap,
+            title: 'Permissionless Liquidations',
+            desc: 'Anyone can liquidate undercollateralised positions and earn a 5% bonus.',
+          },
+          {
+            icon: TrendingUp,
+            title: 'Funding Rate Alignment',
+            desc: 'Every 150 blocks (~8 hours) longs and shorts rebalance to the spot index.',
+          },
+        ].map(({ icon: Icon, title, desc }) => (
+          <Card key={title} className="space-y-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+              <Icon size={15} className="text-blue-400" />
+            </div>
+            <p className="font-semibold text-[var(--text-primary)] text-sm">{title}</p>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{desc}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
