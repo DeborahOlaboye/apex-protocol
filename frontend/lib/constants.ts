@@ -17,3 +17,13 @@ export const MARKETS = {
   1: { id: 1, name: 'BTC/USD', baseAsset: 'BTC', quoteAsset: 'USD', assetId: ASSET_IDS.SBTC },
   2: { id: 2, name: 'STX/USD', baseAsset: 'STX', quoteAsset: 'USD', assetId: ASSET_IDS.STX },
 } as const;
+
+export const BASIS_POINTS = 10_000;
+export const MAX_LEVERAGE = 20;
+export const MAINTENANCE_MARGIN_BPS = 500; // 5%
+export const LIQUIDATION_BONUS_BPS = 500;  // 5%
+export const INSURANCE_CUT_BPS = 2000;     // 20%
+export const FUNDING_INTERVAL_BLOCKS = 150;
+export const STALE_THRESHOLD_BLOCKS = 150;
+
+export const NETWORK = 'mainnet';
