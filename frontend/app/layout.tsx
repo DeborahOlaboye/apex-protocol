@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
-import dynamic from 'next/dynamic';
 import './globals.css';
-
-// ssr:false is forbidden in server components — moved to ClientShell
-const ClientShell = dynamic(() => import('@/components/layout/ClientShell').then((m) => m.ClientShell));
+import { ClientShell } from '@/components/layout/ClientShell';
 
 export const metadata: Metadata = {
   title: 'Apex Protocol — Perpetual Futures on Bitcoin',
-  description: 'Non-custodial perpetual futures trading on Stacks.',
+  description: 'Non-custodial perpetual futures trading on Stacks. Up to 20x leverage with sBTC and STX collateral.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
