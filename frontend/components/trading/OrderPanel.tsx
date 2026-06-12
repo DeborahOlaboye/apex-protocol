@@ -237,3 +237,22 @@ export function OrderPanel({ market }: OrderPanelProps) {
           )}
         </div>
       )}
+
+      {/* Add margin form */}
+      {tab === 'add-margin' && (
+        <div className="space-y-3">
+          {!position && !posLoading && (
+            <p className="text-center text-xs text-[var(--text-muted)] py-6">No open position to add margin to.</p>
+          )}
+          {position && (
+            <>
+              <Input label="Amount to add" type="number" placeholder="0.0000" min="0" suffix={collateral}
+                value={addMarginAmt} onChange={(e) => setAddMarginAmt(e.target.value)} />
+              <Button variant="primary" size="lg" className="w-full"
+                disabled={submitting || !parseFloat(addMarginAmt)} onClick={handleAddMargin}>
+                {submitting ? 'Adding…' : 'Add Margin'}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
