@@ -3,9 +3,9 @@
 
 (define-constant CONTRACT-OWNER tx-sender)
 (define-constant FUNDING-INTERVAL u150)
-(define-constant MAX-FUNDING-RATE i100)
-(define-constant MIN-FUNDING-RATE i-100)
-(define-constant BASIS-POINTS i10000)
+(define-constant MAX-FUNDING-RATE 100)
+(define-constant MIN-FUNDING-RATE -100)
+(define-constant BASIS-POINTS 10000)
 
 (define-constant ERR-UNAUTHORIZED (err u100))
 (define-constant ERR-TOO-EARLY (err u101))
@@ -26,16 +26,16 @@
 (define-read-only (get-current-rate (market-id uint))
   (match (map-get? funding-rates { market-id: market-id })
     data (get rate data)
-    i0))
+    0))
 
 (define-read-only (get-cumulative-rate (market-id uint))
   (match (map-get? funding-rates { market-id: market-id })
     data (get cumulative-rate data)
-    i0))
+    0))
 
 (define-read-only (can-apply-funding (market-id uint))
   (match (map-get? funding-rates { market-id: market-id })
-    data (>= block-height (+ (get last-update data) FUNDING-INTERVAL))
+    data (>= stacks-block-height (+ (get last-update data) FUNDING-INTERVAL))
     true))
 
 ;; Calculates funding payment for a position
@@ -60,11 +60,11 @@
 (define-public (calculate-funding-rate (market-id uint) (mark-price uint) (index-price uint))
   (begin
     (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
-    (let* ((mark (to-int mark-price))
+    (let ((mark (to-int mark-price))
            (index (to-int index-price))
-           (premium (if (> index i0)
+           (premium (if (> index 0)
                       (/ (* (- mark index) BASIS-POINTS) index)
-                      i0))
+                      0))
            (clamped (clamp-rate premium)))
       (match (map-get? funding-rates { market-id: market-id })
         existing
@@ -73,20 +73,20 @@
           (merge existing { rate: clamped }))
         (map-set funding-rates
           { market-id: market-id }
-          { rate: clamped, last-update: block-height, cumulative-rate: i0 }))
+          { rate: clamped, last-update: stacks-block-height, cumulative-rate: 0}))
       (ok clamped))))
 
 (define-public (apply-funding (market-id uint))
   (begin
     (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
     (let ((data (unwrap! (map-get? funding-rates { market-id: market-id }) ERR-MARKET-NOT-FOUND)))
-      (asserts! (>= block-height (+ (get last-update data) FUNDING-INTERVAL)) ERR-TOO-EARLY)
+      (asserts! (>= stacks-block-height (+ (get last-update data) FUNDING-INTERVAL)) ERR-TOO-EARLY)
       (map-set funding-rates
         { market-id: market-id }
         { rate: (get rate data),
-          last-update: block-height,
+          last-update: stacks-block-height,
           cumulative-rate: (+ (get cumulative-rate data) (get rate data)) })
-      (print { event: "funding-applied", market-id: market-id, rate: (get rate data), block: block-height })
+      (print { event: "funding-applied", market-id: market-id, rate: (get rate data), block: stacks-block-height })
       (ok (get rate data)))))
 
 (define-public (init-market (market-id uint))
@@ -94,7 +94,7 @@
     (asserts! (default-to false (map-get? authorized-contracts tx-sender)) ERR-UNAUTHORIZED)
     (map-set funding-rates
       { market-id: market-id }
-      { rate: i0, last-update: block-height, cumulative-rate: i0 })
+      { rate: 0, last-update: stacks-block-height, cumulative-rate: 0})
     (ok true)))
 
 (define-public (authorize-contract (contract principal))
