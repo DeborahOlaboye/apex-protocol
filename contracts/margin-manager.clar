@@ -21,7 +21,6 @@
 (define-map authorized-contracts principal bool)
 
 (define-data-var owner principal CONTRACT-OWNER)
-(define-data-var sbtc-contract principal 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token)
 
 ;; Read-only functions
 
@@ -65,7 +64,7 @@
 (define-public (deposit-sbtc (amount uint))
   (begin
     (asserts! (> amount u0) ERR-INVALID-AMOUNT)
-    (try! (contract-call? (var-get sbtc-contract) transfer amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token transfer amount tx-sender (as-contract tx-sender) none))
     (add-balance tx-sender SBTC-ASSET-ID amount)
     (print { event: "deposit", user: tx-sender, asset-id: SBTC-ASSET-ID, amount: amount })
     (ok true)))
@@ -77,7 +76,7 @@
     (try! (subtract-balance tx-sender asset-id amount))
     (if (is-eq asset-id STX-ASSET-ID)
       (try! (as-contract (stx-transfer? amount tx-sender tx-sender)))
-      (try! (as-contract (contract-call? (var-get sbtc-contract) transfer amount tx-sender tx-sender none))))
+      (try! (as-contract (contract-call? 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token transfer amount tx-sender tx-sender none))))
     (print { event: "withdraw", user: tx-sender, asset-id: asset-id, amount: amount })
     (ok true)))
 
@@ -126,8 +125,8 @@
     (map-delete authorized-contracts contract)
     (ok true)))
 
-(define-public (set-sbtc-contract (new-contract principal))
+(define-public (transfer-ownership (new-owner principal))
   (begin
     (asserts! (is-eq tx-sender (var-get owner)) ERR-UNAUTHORIZED)
-    (var-set sbtc-contract new-contract)
+    (var-set owner new-owner)
     (ok true)))
