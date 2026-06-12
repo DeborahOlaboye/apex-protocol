@@ -1,54 +1,47 @@
 'use client';
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { useState, useMemo } from 'react';
+import { openContractCall } from '@stacks/connect';
+import { DEPLOYER, ASSET_IDS, NETWORK } from '@/lib/constants';
+import { buildOpenPosition, buildClosePosition, buildAddMargin } from '@/lib/stacks';
+import { useWallet } from '@/context/WalletContext';
+import { usePosition } from '@/hooks/usePosition';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { formatPrice, formatCurrency, formatPercent, macroToMicro, formatPnl } from '@/lib/utils';
 import type { Market } from '@/types';
 
-type Tab = 'open' | 'close' | 'add-margin';
-type Side = 'long' | 'short';
+interface OrderPanelProps {
+  market: Market;
+}
 
-export function OrderPanel({ market }: { market: Market }) {
+type Side = 'long' | 'short';
+type Tab = 'open' | 'close' | 'add-margin';
+
+export function OrderPanel({ market }: OrderPanelProps) {
+  const { connected, address, connect } = useWallet();
+  const { position, loading: posLoading, refetch } = usePosition(address, market.id);
+
   const [tab, setTab] = useState<Tab>('open');
   const [side, setSide] = useState<Side>('long');
-  const [collateral, setCollateral] = useState<'STX' | 'SBTC'>('STX');
   const [size, setSize] = useState('');
+  const [margin, setMargin] = useState('');
   const [leverage, setLeverage] = useState(5);
-  return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex rounded-lg bg-[var(--surface-elevated)] p-1 gap-1">
-        {(['open', 'close', 'add-margin'] as Tab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 rounded-md py-1.5 text-xs font-semibold cursor-pointer ${tab === t ? 'bg-[var(--surface)] text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
-            {t === 'add-margin' ? 'Add Margin' : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-      {tab === 'open' && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant={side === 'long' ? 'long' : 'secondary'} size="sm" onClick={() => setSide('long')} className="w-full">Long</Button>
-            <Button variant={side === 'short' ? 'short' : 'secondary'} size="sm" onClick={() => setSide('short')} className="w-full">Short</Button>
-          </div>
-          <div className="flex gap-2">
-            {(['STX', 'SBTC'] as const).map((a) => (
-              <button key={a} onClick={() => setCollateral(a)}
-                className={`flex-1 rounded-md py-1.5 text-xs font-semibold border cursor-pointer ${collateral === a ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-[var(--border)] text-[var(--text-muted)]'}`}>{a}</button>
-            ))}
-          </div>
-          <Input label="Size (units)" type="number" placeholder="0" value={size} onChange={(e) => setSize(e.target.value)} />
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-[var(--text-secondary)]">Leverage</span>
-              <span className="font-semibold">{leverage}x</span>
-            </div>
-            <input type="range" min={1} max={market.maxLeverage ?? 20} value={leverage}
-              onChange={(e) => setLeverage(Number(e.target.value))}
-              className="w-full accent-blue-500 cursor-pointer" />
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-}
+  const [collateral, setCollateral] = useState<'STX' | 'SBTC'>('STX');
+  const [addMarginAmt, setAddMarginAmt] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [txId, setTxId] = useState<string | null>(null);
+
+  const sizeNum = parseFloat(size) || 0;
+  const marginNum = parseFloat(margin) || 0;
+  const notional = sizeNum * (market.price ?? 0);
+  const effectiveLeverage = marginNum > 0 ? notional / marginNum : 0;
+  const requiredMargin = notional / leverage;
+
+  const marginError = useMemo(() => {
+    if (!marginNum || !sizeNum) return undefined;
+    const maxLev = market.maxLeverage ?? 20;
+    if (effectiveLeverage > maxLev) return `Max leverage is ${maxLev}×`;
+    return undefined;
+  }, [marginNum, sizeNum, effectiveLeverage, market.maxLeverage]);
