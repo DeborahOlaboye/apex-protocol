@@ -256,3 +256,23 @@ export function OrderPanel({ market }: OrderPanelProps) {
           )}
         </div>
       )}
+
+      {txId && (
+        <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 text-xs text-green-400">
+          <p className="font-semibold">Transaction submitted</p>
+          <a href={`https://explorer.hiro.so/txid/${txId}?chain=mainnet`} target="_blank" rel="noopener noreferrer"
+            className="underline break-all">{txId}</a>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function Stat({ label, value, valueClass = 'text-[var(--text-primary)]' }: { label: string; value: string; valueClass?: string }) {
+  return (
+    <div>
+      <p className="text-[var(--text-muted)]">{label}</p>
+      <p className={`font-semibold ${valueClass}`}>{value}</p>
+    </div>
+  );
+}
