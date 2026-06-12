@@ -40,3 +40,22 @@ export function microToMacro(micro: number): number {
 export function macroToMicro(macro: number): number {
   return Math.floor(macro * 1_000_000);
 }
+
+export function formatPnl(pnl: number): string {
+  const formatted = formatCurrency(Math.abs(pnl));
+  return pnl >= 0 ? `+${formatted}` : `-${formatted}`;
+}
+
+export function truncateAddress(addr: string): string {
+  if (!addr) return '';
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+export function calcLeverage(size: number, price: number, margin: number): number {
+  if (!margin) return 0;
+  return (size * price) / margin;
+}
+
+export function calcRequiredMargin(size: number, price: number, leverage: number): number {
+  return (size * price) / leverage;
+}
