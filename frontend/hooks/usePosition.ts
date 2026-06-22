@@ -7,10 +7,12 @@ import type { Position } from '@/types';
 export function usePosition(address: string | null, marketId: number) {
   const [position, setPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPosition = useCallback(async () => {
     if (!address) { setPosition(null); return; }
     setLoading(true);
+    setError(null);
     try {
       const [posData, pnlData, ratioData] = await Promise.allSettled([
         getPosition(address, marketId),
@@ -36,7 +38,8 @@ export function usePosition(address: string | null, marketId: number) {
         unrealizedPnl: pnl?.value,
         marginRatio: ratio?.value,
       });
-    } catch (_) {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch position');
       setPosition(null);
     } finally {
       setLoading(false);
@@ -49,7 +52,7 @@ export function usePosition(address: string | null, marketId: number) {
     return () => clearInterval(interval);
   }, [fetchPosition]);
 
-  return { position, loading, refetch: fetchPosition };
+  return { position, loading, error, refetch: fetchPosition };
 }
 
 export function useIsLiquidatable(address: string | null, marketId: number) {
