@@ -13,20 +13,33 @@ import { DEPLOYER, NETWORK } from './constants';
 
 export const network = NETWORK === 'mainnet' ? STACKS_MAINNET : STACKS_TESTNET;
 
+const READ_TIMEOUT_MS = 12_000;
+
+function withTimeout<T>(promise: Promise<T>, ms = READ_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`readOnly timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 export async function readOnly<T>(
   contractName: string,
   functionName: string,
   functionArgs: ClarityValue[],
   senderAddress: string = DEPLOYER,
 ): Promise<T> {
-  const result = await fetchCallReadOnlyFunction({
-    contractAddress: DEPLOYER,
-    contractName,
-    functionName,
-    functionArgs,
-    senderAddress,
-    network: NETWORK as 'mainnet' | 'testnet',
-  });
+  const result = await withTimeout(
+    fetchCallReadOnlyFunction({
+      contractAddress: DEPLOYER,
+      contractName,
+      functionName,
+      functionArgs,
+      senderAddress,
+      network: NETWORK as 'mainnet' | 'testnet',
+    }),
+  );
   return cvToValue(result) as T;
 }
 
