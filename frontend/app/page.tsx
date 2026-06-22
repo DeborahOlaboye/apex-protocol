@@ -9,10 +9,16 @@ import { formatPrice, formatNumber, microToMacro } from '@/lib/utils';
 import { TrendingUp, ArrowRight, Shield, Zap, DollarSign } from 'lucide-react';
 
 export default function MarketsPage() {
-  const { markets, loading } = useAllMarkets();
+  const { markets, loading, error } = useAllMarkets();
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 space-y-10">
+      {error && (
+        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3 text-xs text-yellow-400 flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-yellow-400 shrink-0" />
+          Oracle data unavailable — prices and open interest may be stale. On-chain reads are retrying every 30s.
+        </div>
+      )}
       {/* Hero */}
       <div className="text-center space-y-4 py-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs text-blue-400">
