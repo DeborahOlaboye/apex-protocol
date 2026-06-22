@@ -9,12 +9,14 @@ export function useMarket(marketId: number) {
   const [market, setMarket] = useState<Market | null>(null);
   const [price, setPrice] = useState<PriceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMarket = useCallback(async () => {
     const base = MARKETS[marketId as keyof typeof MARKETS];
     if (!base) return;
 
     try {
+      setError(null);
       const [marketData, priceData] = await Promise.allSettled([
         getMarket(marketId),
         getLatestPrice(base.assetId),
@@ -36,8 +38,9 @@ export function useMarket(marketId: number) {
       if (p) {
         setPrice({ price: p['price'] as number, timestamp: p['timestamp'] as number });
       }
-    } catch (_) {
-      setMarket({ ...base });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch market data');
+      setMarket((prev) => prev ?? { ...base });
     } finally {
       setLoading(false);
     }
@@ -49,14 +52,16 @@ export function useMarket(marketId: number) {
     return () => clearInterval(interval);
   }, [fetchMarket]);
 
-  return { market, price, loading, refetch: fetchMarket };
+  return { market, price, loading, error, refetch: fetchMarket };
 }
 
 export function useAllMarkets() {
   const [markets, setMarkets] = useState<Market[]>(Object.values(MARKETS));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
+    setError(null);
     const ids = Object.keys(MARKETS).map(Number);
     const results = await Promise.allSettled(
       ids.map(async (id) => {
@@ -78,7 +83,9 @@ export function useAllMarkets() {
       }),
     );
 
-    setMarkets(results.filter((r) => r.status === 'fulfilled').map((r) => (r as PromiseFulfilledResult<Market>).value));
+    const fulfilled = results.filter((r) => r.status === 'fulfilled').map((r) => (r as PromiseFulfilledResult<Market>).value);
+    if (fulfilled.length === 0) setError('Unable to fetch market data. Check your connection.');
+    setMarkets(fulfilled.length > 0 ? fulfilled : Object.values(MARKETS));
     setLoading(false);
   }, []);
 
@@ -88,5 +95,5 @@ export function useAllMarkets() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  return { markets, loading, refetch: fetchAll };
+  return { markets, loading, error, refetch: fetchAll };
 }
