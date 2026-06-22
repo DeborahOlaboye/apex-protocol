@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     '@stacks/common',
     '@stacks/encryption',
   ],
+  // Prevent server-side evaluation of browser-only @stacks packages
+  serverExternalPackages: ['@stacks/transactions', '@stacks/network', '@stacks/connect'],
 };
 
 export default nextConfig;
