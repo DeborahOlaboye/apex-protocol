@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  turbopack: {},
   transpilePackages: [
     '@stacks/transactions',
     '@stacks/network',
