@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { connect, disconnect as stacksDisconnect, isConnected, request } from '@stacks/connect';
 
 interface WalletContextValue {
   connected: boolean;
@@ -25,11 +24,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const handleConnect = useCallback(async () => {
     try {
+      const { connect } = await import('@stacks/connect');
       const result = await connect();
-      // result.addresses is an array of AddressEntry: { symbol?, address, publicKey }
-      // STX addresses start with 'SP' (mainnet) or 'ST' (testnet)
       const stxEntry = result.addresses.find(
-        (a) => a.address.startsWith('SP') || a.address.startsWith('ST'),
+        (a: { address: string }) => a.address.startsWith('SP') || a.address.startsWith('ST'),
       );
       if (stxEntry) {
         setAddress(stxEntry.address);
@@ -40,8 +38,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const handleDisconnect = useCallback(() => {
-    stacksDisconnect();
+  const handleDisconnect = useCallback(async () => {
+    try {
+      const { disconnect } = await import('@stacks/connect');
+      disconnect();
+    } catch {
+      // ignore
+    }
     setAddress(null);
     localStorage.removeItem('apex_address');
   }, []);

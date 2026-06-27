@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { openContractCall } from '@stacks/connect';
 import { DEPLOYER, ASSET_IDS, NETWORK } from '@/lib/constants';
 import { buildDepositStx, buildDepositSbtc, buildWithdraw } from '@/lib/stacks';
 import { useWallet } from '@/context/WalletContext';
@@ -23,7 +22,7 @@ export function CollateralPanel() {
 
   const balance = asset === 'STX' ? stxBalance : sbtcBalance;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!connected) { connect(); return; }
     const amt = parseFloat(amount);
     if (!amt) return;
@@ -38,6 +37,7 @@ export function CollateralPanel() {
       tx = buildWithdraw(asset === 'STX' ? ASSET_IDS.STX : ASSET_IDS.SBTC, micro);
     }
 
+    const { openContractCall } = await import('@stacks/connect');
     openContractCall({
       contractAddress: DEPLOYER,
       contractName: tx.contractName,

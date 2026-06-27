@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { openContractCall } from '@stacks/connect';
 import { DEPLOYER, MARKETS } from '@/lib/constants';
 import { network, buildClosePosition } from '@/lib/stacks';
 import { useWallet } from '@/context/WalletContext';
@@ -31,6 +30,7 @@ function PositionRow({ marketId, address }: { marketId: number; address: string 
   async function handleClose() {
     setClosing(true);
     try {
+      const { openContractCall } = await import('@stacks/connect');
       const tx = buildClosePosition(marketId);
       await openContractCall({
         contractAddress: DEPLOYER,

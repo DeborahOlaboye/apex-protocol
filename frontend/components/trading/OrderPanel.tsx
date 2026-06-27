@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { openContractCall } from '@stacks/connect';
 import { DEPLOYER, ASSET_IDS, NETWORK } from '@/lib/constants';
 import { buildOpenPosition, buildClosePosition, buildAddMargin } from '@/lib/stacks';
 import { useWallet } from '@/context/WalletContext';
@@ -51,6 +50,7 @@ export function OrderPanel({ market }: OrderPanelProps) {
     if (!sizeNum || !marginNum || marginError) return;
     setSubmitting(true);
     try {
+      const { openContractCall } = await import('@stacks/connect');
       const tx = buildOpenPosition(
         market.id,
         side === 'long',
@@ -76,6 +76,7 @@ export function OrderPanel({ market }: OrderPanelProps) {
     if (!connected || !address) { connect(); return; }
     setSubmitting(true);
     try {
+      const { openContractCall } = await import('@stacks/connect');
       const tx = buildClosePosition(market.id);
       openContractCall({
         contractAddress: DEPLOYER,
@@ -97,6 +98,7 @@ export function OrderPanel({ market }: OrderPanelProps) {
     if (!amt) return;
     setSubmitting(true);
     try {
+      const { openContractCall } = await import('@stacks/connect');
       const tx = buildAddMargin(market.id, macroToMicro(amt));
       openContractCall({
         contractAddress: DEPLOYER,

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { openContractCall } from '@stacks/connect';
 import { DEPLOYER, NETWORK } from '@/lib/constants';
 import { buildLiquidate, isLiquidatable } from '@/lib/stacks';
 import { useWallet } from '@/context/WalletContext';
@@ -36,10 +35,11 @@ export function LiquidationCard({ marketId }: LiquidationCardProps) {
     }
   }
 
-  function handleLiquidate() {
+  async function handleLiquidate() {
     if (!connected) { connect(); return; }
     if (!targetAddress || !liquidatable) return;
     setSubmitting(true);
+    const { openContractCall } = await import('@stacks/connect');
     const tx = buildLiquidate(targetAddress, marketId);
     openContractCall({
       contractAddress: DEPLOYER,
