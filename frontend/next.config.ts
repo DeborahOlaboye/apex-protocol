@@ -1,7 +1,5 @@
 import type { NextConfig } from 'next';
 
-// transpilePackages: forces Turbopack to re-bundle @stacks/* through its own
-// pipeline — fixes "module factory is not available" crashes in production.
 const nextConfig: NextConfig = {
   turbopack: {},
   transpilePackages: [
@@ -12,8 +10,6 @@ const nextConfig: NextConfig = {
     '@stacks/common',
     '@stacks/encryption',
   ],
-  // Prevent server-side evaluation of browser-only @stacks packages
-  serverExternalPackages: ['@stacks/transactions', '@stacks/network', '@stacks/connect'],
 };
 
 export default nextConfig;
