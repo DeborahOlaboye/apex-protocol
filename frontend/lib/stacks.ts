@@ -24,6 +24,20 @@ function withTimeout<T>(promise: Promise<T>, ms = READ_TIMEOUT_MS): Promise<T> {
   ]);
 }
 
+// cvToValue in @stacks/transactions v7 returns BigInt for Clarity uint/int.
+// Convert all BigInts to Number at the boundary so the rest of the app
+// can do normal arithmetic without mixing types.
+function normalizeBigInts(val: unknown): unknown {
+  if (typeof val === 'bigint') return Number(val);
+  if (Array.isArray(val)) return val.map(normalizeBigInts);
+  if (val !== null && typeof val === 'object') {
+    return Object.fromEntries(
+      Object.entries(val as Record<string, unknown>).map(([k, v]) => [k, normalizeBigInts(v)]),
+    );
+  }
+  return val;
+}
+
 export async function readOnly<T>(
   contractName: string,
   functionName: string,
@@ -40,7 +54,7 @@ export async function readOnly<T>(
       network: NETWORK as 'mainnet' | 'testnet',
     }),
   );
-  return cvToValue(result) as T;
+  return normalizeBigInts(cvToValue(result)) as T;
 }
 
 export async function contractCall(
