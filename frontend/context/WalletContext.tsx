@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 interface WalletContextValue {
   connected: boolean;
@@ -22,6 +22,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem('apex_address');
   });
 
+  // Pre-load @stacks/connect on mount so defineCustomElements(window) has time
+  // to register the <connect-modal> web component before the user clicks.
+  useEffect(() => {
+    import('@stacks/connect').catch(() => {});
+  }, []);
+
   const handleConnect = useCallback(async () => {
     try {
       const { connect } = await import('@stacks/connect');
@@ -33,8 +39,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setAddress(stxEntry.address);
         localStorage.setItem('apex_address', stxEntry.address);
       }
-    } catch {
-      // user cancelled
+    } catch (err) {
+      console.error('[WalletConnect]', err);
     }
   }, []);
 
