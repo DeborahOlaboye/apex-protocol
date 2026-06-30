@@ -25,7 +25,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const handleConnect = useCallback(async () => {
     try {
       const { connect } = await import('@stacks/connect');
-      const result = await connect();
+      const result = await connect({ forceWalletSelect: true });
       const stxEntry = result.addresses.find(
         (a: { address: string }) => a.address.startsWith('SP') || a.address.startsWith('ST'),
       );
